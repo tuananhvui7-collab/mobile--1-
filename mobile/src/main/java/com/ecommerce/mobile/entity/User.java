@@ -5,9 +5,13 @@ import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "users")
 @Data
 @NoArgsConstructor
-@MappedSuperclass
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // 1 bảng duy nhất
+@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
+
 
 public abstract class User {
     @Id 

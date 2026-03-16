@@ -8,13 +8,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-
+@Entity
+@DiscriminatorValue("CUSTOMER")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode (callSuper = true, exclude = "role") // so sánh đối tượng, bỏ cột role đi. 
-@Entity
-@Table (name = "users")
+
+
 
 // điểm khác biệt: Chỉ có giá trị này trong cột mới được phép thêm vào bảng users. 
 public class Customer extends User {
