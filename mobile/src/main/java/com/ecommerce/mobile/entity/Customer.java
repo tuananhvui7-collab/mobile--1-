@@ -5,9 +5,13 @@ import com.ecommerce.mobile.enums.Rank;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode (callSuper = true, exclude = "role") // so sánh đối tượng, bỏ cột role đi. 
 @Entity
 @Table (name = "users")
@@ -21,8 +25,5 @@ public class Customer extends User {
     private Rank rank = Rank.BRONZE;
 
 
-    // constructor
-    public Customer(){
-        super(); // Gọi constructor của user cha. (Cái này quên rồi)
-    }
+
 }
