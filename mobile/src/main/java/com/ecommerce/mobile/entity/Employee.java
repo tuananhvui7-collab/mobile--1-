@@ -1,6 +1,4 @@
 package com.ecommerce.mobile.entity;
-
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -12,7 +10,7 @@ import jakarta.persistence.*;
 @DiscriminatorValue("EMPLOYEE")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
+@EqualsAndHashCode(callSuper=false)
 
 public class Employee extends User {
     // chua phat trien, chac la se co ten, luong. 
