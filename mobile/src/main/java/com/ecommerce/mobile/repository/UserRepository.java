@@ -8,6 +8,9 @@ import java.util.Optional;
 
 @Repository
 
+// JpaRepository<Entity, KiểuKhóaChính>
+// Đã có sẵn: findById, findAll, save, delete, count, ...
+
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Boolean existsByEmail(String email);

@@ -7,13 +7,8 @@ import com.ecommerce.mobile.entity.Manager;
 import java.util.Optional;
 
 @Repository
-public interface ManagerRepository extends JpaRepository<Manager, Long>{
-    
+public interface ManagerRepository extends JpaRepository<Manager, Long>{  
     Optional<Manager> findByEmail (String email) ;
-    Boolean existByEmail(String email);
-
-
-
 }
 
 
