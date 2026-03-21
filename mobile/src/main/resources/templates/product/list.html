@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>San pham</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+
+    <!-- FORM TIM KIEM -->
+    <form th:action="@{/products}" method="get" class="d-flex mb-4">
+        <!-- th:value dien lai keyword vao o khi reload trang -->
+        <input type="text" name="keyword" th:value="${keyword}"
+               class="form-control me-2" placeholder="Tim dien thoai...">
+        <button type="submit" class="btn btn-primary">Tim</button>
+    </form>
+
+    <!-- DANH SACH SAN PHAM -->
+    <!-- products.content = danh sach trang hien tai (Page<Product>) -->
+    <div class="row">
+        <div th:each="product : ${products.content}" class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <!-- th:text: dien ten san pham that vao the h5 -->
+                    <h5 class="card-title" th:text="${product.name}">Ten sp</h5>
+                    <p class="text-muted" th:text="${product.brand}">Hang</p>
+                    <!-- th:href: tao link /products/1, /products/2... -->
+                    <a th:href="@{/products/{id}(id=${product.productId})}"
+                       class="btn btn-outline-primary btn-sm">
+                        Xem chi tiet
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHAN TRANG -->
+    <!-- products.first = true neu day la trang dau -->
+    <!-- products.last  = true neu day la trang cuoi -->
+    <nav>
+        <ul class="pagination justify-content-center">
+            <!-- Nut "Trang truoc" -- disable neu dang o trang dau -->
+            <li class="page-item"
+                th:classappend="${products.first} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/products(page=${products.number-1},keyword=${keyword})}">
+                    Trang truoc
+                </a>
+            </li>
+
+            <!-- Hien so trang hien tai / tong so trang -->
+            <li class="page-item disabled">
+                <span class="page-link"
+                      th:text="${products.number+1}+'/'+${products.totalPages}">
+                </span>
+            </li>
+
+            <!-- Nut "Trang sau" -- disable neu dang o trang cuoi -->
+            <li class="page-item"
+                th:classappend="${products.last} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/products(page=${products.number+1},keyword=${keyword})}">
+                    Trang sau
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+</body></html>
+

@@ -18,25 +18,27 @@ public class CustomUserDetailService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository; // dùng userRepository để tìm email cho tất cả user.
 
+    // chỉ cần dùng đúng hàm này trong userdetailsservice.
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-       // tìm user theo email.
-        User user = userRepository.findByEmail(email).
+       // Bước 1 tìm user theo email. Nếu k có trả về lỗi
+        User user = userRepository.findByEmail(email). // dependency injection ở đây. (Thay vì tạo thằng user mới. ta gọi thằng repo này và lấy hàm của nó chạy SQL)
         orElseThrow(
             () -> new UsernameNotFoundException("Không tìm thấy tài khoản" + email) 
         );
-         // kiểm tra xem tài khoản có bị khóa không
+         // Bước 2:kiểm tra xem tài khoản có bị khóa không . Có thì trả về lỗi
          if (user.getIsActive() == null || !user.getIsActive()){
             throw new UsernameNotFoundException("Tài khoản đã bị khóa !");
          }
 
          // SPRING SECURITY BẮT CÓ TIỀN TỐ ROLE_ TROGN TÊN QUYỀN
          // security viết hasRole("CUSTOMER") -> SPRING KIỂM TRA "ROLE_CUSTOMER"
+         // Bước 3: lấy role nếu trải qua 2 bước kiểm duyệt
          GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getNameRole());
 
 
 
-        // Đóng gói lại mang cho spring security config xem. 
+        // Trả về danh sách Đóng gói lại mang cho spring security config xem. 
         return new org.springframework.security.core.userdetails.User(
             user.getEmail(),
             user.getHashPassword(), 

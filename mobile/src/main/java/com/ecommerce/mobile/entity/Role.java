@@ -1,6 +1,8 @@
 package com.ecommerce.mobile.entity;
 
 
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.AllArgsConstructor;
@@ -20,9 +22,9 @@ public class Role {
     @Column (name = "name_role", nullable = false)
     private String nameRole;
 
-    //@OneToMany(mappedBy = "role") private List<User> user;
-    // user class giờ là @mappedSuper, abstract.
-   
+    @OneToMany(mappedBy = "role") 
+    private List<User> user;
+  
 
     
 
