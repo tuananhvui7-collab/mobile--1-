@@ -14,7 +14,7 @@ import com.ecommerce.mobile.entity.User;
 import com.ecommerce.mobile.repository.UserRepository;
 
 @Service
-public class CustomUserDetailService implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService { // lỗi chính tả.
     @Autowired
     private UserRepository userRepository; // dùng userRepository để tìm email cho tất cả user.
 

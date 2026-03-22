@@ -1,5 +1,6 @@
 package com.ecommerce.mobile.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,6 +11,11 @@ import org.springframework.security.web.SecurityFilterChain;
 // @Configuration: day la class cau hinh, Spring doc khi khoi dong
 @Configuration
 public class SecurityConfig {
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
+        // thêm injection class vào.
+
 
     // @Bean: tao 1 object BCryptPasswordEncoder va dang ky voi Spring
     // Object nay duoc inject vao CustomerService de ma hoa password
