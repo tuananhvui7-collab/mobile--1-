@@ -12,5 +12,6 @@ import jakarta.persistence.*;
 @DiscriminatorValue("MANAGER")
 
 public class Manager extends Employee {
+
 	
 }

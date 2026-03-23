@@ -45,7 +45,7 @@ public class AuthController {
         //TODO: process POST request
         try{
             customerService.register(email, password, fullName, phone);
-            return "redirect://login?registered = true";
+            return "redirect:/login?registered = true";
         }catch(Exception e){
             model.addAttribute("error", e.getMessage());
             return "auth/register";

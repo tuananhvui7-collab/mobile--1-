@@ -14,7 +14,7 @@ import com.ecommerce.mobile.entity.User;
 import com.ecommerce.mobile.repository.UserRepository;
 
 @Service
-public class CustomUserDetailsService implements UserDetailsService { // lỗi chính tả.
+public class CustomUserDetailsService implements UserDetailsService { //debug 1: lỗi chính tả.
     @Autowired
     private UserRepository userRepository; // dùng userRepository để tìm email cho tất cả user.
 
@@ -33,7 +33,9 @@ public class CustomUserDetailsService implements UserDetailsService { // lỗi c
 
          // SPRING SECURITY BẮT CÓ TIỀN TỐ ROLE_ TROGN TÊN QUYỀN
          // security viết hasRole("CUSTOMER") -> SPRING KIỂM TRA "ROLE_CUSTOMER"
-         // Bước 3: lấy role nếu trải qua 2 bước kiểm duyệt
+         // Bước 3: lấy quyền theo role nếu trải qua 2 bước kiểm duyệt
+
+         // Chỗ này thực ra chưa hiểu lắm.
          GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getNameRole());
 
 

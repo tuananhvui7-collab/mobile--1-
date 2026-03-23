@@ -9,10 +9,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 // @Configuration: day la class cau hinh, Spring doc khi khoi dong
+/// QUY TRÌNH
+/// INJECTION THẰNG UserDetailsService
+/// KHAI BÁO BEAN CHO HÀM MÃ HÓA MK
+/// KHAI BÁO BEAN CHO HÀM TẠO CHUỖI CẤU HÌNH.
+    /// CẤU HÌNH PHÂN QUYỀN (AUTHORIZE, AUTHENTICATED,REQUESTMATCHER, HAS ROLE, PERMITALL(),  ANYREQUEST,...)
+    /// CẤU HÌNH LOGIN (THÀNH CÔNG, THẤT BẠI,XỬ LÝ FORM,...)
+    /// CẤU HÌNH LOGOUT.(THÀNH CÔNG, THẤT BẠI, HỦY SESSION, XÓA COOKIES)
+/// 
 @Configuration
 public class SecurityConfig {
     @Autowired
-    private CustomUserDetailsService customUserDetailsService;
+    private CustomUserDetailsService customUserDetailsService; 
 
         // thêm injection class vào.
 
@@ -33,10 +41,10 @@ public class SecurityConfig {
 
         http
             // ===== PHAN QUYEN URL =====
-            .authorizeHttpRequests(auth -> auth
+            .authorizeHttpRequests(auth -> auth // hàm lambda, tượng trưng cho annonymous class, k cần khai báo class vẫn vt dc thân hàm. Dành cho các interface chỉ có 1 hàm
 
                 // CONG KHAI -- ai cung vao duoc, khong can dang nhap
-                .requestMatchers(
+                .requestMatchers( // map người dùng vào những trang
                     "/",               // Trang chu
                     "/products/**",    // Xem san pham (U4)
                     "/login",          // Trang dang nhap (U1)
@@ -45,13 +53,13 @@ public class SecurityConfig {
                     "/js/**",          // File JavaScript
                     "/images/**",      // Anh tinh
                     "/api/public/**"   // REST API cong khai
-                ).permitAll()
+                ).permitAll() // cấp full quyền
 
                 // CHI ADMIN (Manager co role ADMIN)
                 .requestMatchers(
                     "/admin/**",       // Trang quan tri (U13, U14)
-                    "/api/admin/**"    // API admin
-                ).hasRole("ADMIN")
+                    "/api/manager/**"    // API manager
+                ).hasRole("MANAGER") 
 
                 // CHI EMPLOYEE
                 .requestMatchers(
@@ -89,6 +97,6 @@ public class SecurityConfig {
                 .permitAll()
             );
 
-        return http.build();
+        return http.build(); //xây dựng web cấu hình từ chuỗi (securityFilterChain )
     }
 }

@@ -22,8 +22,8 @@ public class Role {
     @Column (name = "name_role", nullable = false)
     private String nameRole;
 
-    @OneToMany(mappedBy = "role") 
-    private List<User> user;
+    @OneToMany(mappedBy = "role") // one to many là trỏ vào object class, còn many to one trỏ vào cột db.
+    private List<User> user; // quan hệ 1 nhiều.
   
 
     

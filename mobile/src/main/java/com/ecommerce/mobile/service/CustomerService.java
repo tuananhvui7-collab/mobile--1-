@@ -12,6 +12,14 @@ import com.ecommerce.mobile.repository.CustomerRepository;
 import com.ecommerce.mobile.repository.RoleRepository;
 import jakarta.transaction.Transactional;
 
+
+// Luồng chính luôn là:
+// Nhận request (có param or not) (từ controller)
+/// xuống repository lấy dữ liệu (lúc này đã phải injection các repo vào service rồi.)
+/// sau đó sử dụng dữ liệu đó tính toán, hay làm gì ko bt
+/// rồi lưu vào db (save (dữ liệu entity hay lưu thẳng xuống DB gì đó như nhau hết))
+/// rồi trả response cho bên trên (controller)
+/// Có annotation Transactional thể hiện sự rollback.
 @Service
 public class CustomerService {
     @Autowired 
@@ -51,7 +59,7 @@ public class CustomerService {
    // cập nhật thông tin
     public Customer updateCustomerInfo(Long userId, String fullName, String phone){
         // gọi Customer từ DB (repository)
-        @SuppressWarnings("null")
+        @SuppressWarnings("null") // cảnh báo null cho userID
         Customer customer = customerRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Khong tim thay tai khoan!"));
             customer.setFullName(fullName);
@@ -67,9 +75,11 @@ public class CustomerService {
         Customer customer = customerRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
 
+            // Kiểm tra MK cũ
             if (!passwordEncoder.matches(oldPass, customer.getHashPassword())) {
                 throw new RuntimeException("Mat khau hien tai khong chinh xac!");
             }
+            // cập nhật mk mới
             customer.setHashPassword(passwordEncoder.encode(newPass));
             return customerRepository.save(customer);
         }
@@ -97,10 +107,10 @@ public class CustomerService {
 
 ///  bỏ nhãn mặc định cho tất cả các địa chỉ
         List<Address> all = addressRepository.findByCustomerUserID(customerId);
-        all.forEach(a -> a.setIsDefault(false)); // chỗ này chưa thạo
+        all.forEach(a -> a.setIsDefault(false)); // chỗ này chưa thạo (vừa lambda vừa forEach)
         addressRepository.saveAll(all);
 
-        @SuppressWarnings("null")
+        @SuppressWarnings("null") //  bỏ qua cảnh báo addressId null. Cần sửa lỗi trogn tương lai
         Address address = addressRepository.findById(addressId).orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
         address.setIsDefault(true);
         addressRepository.save(address);
