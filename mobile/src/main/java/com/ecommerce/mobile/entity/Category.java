@@ -4,7 +4,9 @@ import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @NoArgsConstructor
@@ -24,12 +26,18 @@ public class Category {
     private Boolean isActive;
     
     @ManyToOne
-    @JoinColumn (name = "parent_id") // câu hỏi thằng này có thằng cha là gì?
+    @JoinColumn (name = "parent_id")
+        @ToString.Exclude
+    @EqualsAndHashCode.Exclude // câu hỏi thằng này có thằng cha là gì?
     private Category parent;
 
     @OneToMany(mappedBy = "category")
-    private List<Product> product; // quan hệ 1 nhiều.
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Product> products; // quan hệ 1 nhiều.
 
-    @OneToMany(mappedBy = "parent") // thêm code để trả lời câu hỏi thằng cha có thằng con nào
+    @OneToMany(mappedBy = "parent")
+        @ToString.Exclude
+    @EqualsAndHashCode.Exclude // thêm code để trả lời câu hỏi thằng cha có thằng con nào
     private List<Category> children;
 }

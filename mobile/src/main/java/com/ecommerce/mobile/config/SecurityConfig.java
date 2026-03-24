@@ -40,6 +40,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+            .userDetailsService(customUserDetailsService)// cái này phải gọi cái object này mới đúng
             // ===== PHAN QUYEN URL =====
             .authorizeHttpRequests(auth -> auth // hàm lambda, tượng trưng cho annonymous class, k cần khai báo class vẫn vt dc thân hàm. Dành cho các interface chỉ có 1 hàm
 

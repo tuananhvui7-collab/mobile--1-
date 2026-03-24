@@ -42,10 +42,9 @@ public class AuthController {
 
     @PostMapping("/register")
     public String processRegister(@RequestParam String email, @RequestParam String password, @RequestParam String fullName, @RequestParam String phone, Model model) {
-        //TODO: process POST request
         try{
             customerService.register(email, password, fullName, phone);
-            return "redirect:/login?registered = true";
+            return "redirect:/login?registered=true";
         }catch(Exception e){
             model.addAttribute("error", e.getMessage());
             return "auth/register";

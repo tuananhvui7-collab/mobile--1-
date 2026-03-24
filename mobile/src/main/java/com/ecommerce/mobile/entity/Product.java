@@ -1,5 +1,6 @@
 package com.ecommerce.mobile.entity;
 
+import java.util.List;
 import java.time.LocalDateTime;
 
 import com.ecommerce.mobile.enums.ProductStatus;
@@ -7,6 +8,8 @@ import com.ecommerce.mobile.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
 @NoArgsConstructor
@@ -22,13 +25,31 @@ public class Product {
     private String brand;
     @Column(name = "description")
     private String description;
+
     @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     private ProductStatus status;
-    @Column (name = "created_at")
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Category category;
+
+    @OneToMany(mappedBy ="product")
+        @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<ProductVariant> variants;
+    
+    @PrePersist
+    public void prePersit(){
+        this.createdAt = LocalDateTime.now();
+    }
+
+
+
     
 }
