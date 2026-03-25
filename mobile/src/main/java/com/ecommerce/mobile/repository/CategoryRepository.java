@@ -11,9 +11,9 @@ import com.ecommerce.mobile.entity.Category;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    Optional<Category> findBySlug(String slug);
-
-    List<Category> findByParentIsNull();
+    Optional<Category> findBySlug(String slug); // hàm tìm bởi seo?
 
     List<Category> findByIsActiveTrue();
+ 
+    List<Category> findByParentIsNull(); // hàm tìm category đang hoạt đông?
 }

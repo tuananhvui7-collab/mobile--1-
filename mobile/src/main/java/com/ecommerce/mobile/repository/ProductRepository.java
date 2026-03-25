@@ -15,30 +15,31 @@ import com.ecommerce.mobile.enums.ProductStatus;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+
     Page<Product> findByStatus(ProductStatus status, Pageable pageable);
 
     @Query("""
-            select p
-            from Product p
-            where p.status = :status
-              and (
-                  lower(p.name) like lower(concat('%', :keyword, '%'))
-                  or lower(p.brand) like lower(concat('%', :keyword, '%'))
-              )
-            """)
+                select  p 
+                from Product p
+                where p.status = :status
+                and ( lower(p.name) like lower(concat('%', :keyword ,'%'))
+                or lower(p.brand) like lower(concat('%', :keyword, '%'))
+                )
+                    """) //query để làm cho keyword
     Page<Product> searchByStatusAndKeyword(
-            @Param("status") ProductStatus status,
-            @Param("keyword") String keyword,
-            Pageable pageable);
+        @Param("status")ProductStatus status, 
+        @Param("keyword") String keyword,
+         Pageable pageable);
 
-    Page<Product> findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(
+
+    Page<Product> findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase( // tìm sản phẩm bằng tất cả kí tự name, brand, có phân trang
             String name, String brand, Pageable pageable);
 
-    List<Product> findByCategoryCategoryIdAndStatus(Long categoryId, ProductStatus status);
+    List<Product> findByCategoryCategoryIdAndStatus(Long categoryId, ProductStatus status); // tìm sản phẩm bằng categoryId và status
 
-    List<Product> findByStatus(ProductStatus status);
+    List<Product> findByStatus(ProductStatus status); // tìm sản phẩm bằng status
 
-    List<Product> findByBrandAndStatus(String brand, ProductStatus status);
+    List<Product> findByBrandAndStatus(String brand, ProductStatus status); // tìm sản phẩm bằng hãng và status
 
-    List<Product> findByCategoryCategoryId(Long categoryId);
+    List<Product> findByCategoryCategoryId(Long categoryId); // tìm bằng categoryId
 }

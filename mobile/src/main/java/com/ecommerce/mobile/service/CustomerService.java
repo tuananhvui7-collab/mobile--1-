@@ -40,10 +40,10 @@ public class CustomerService {
             throw new RuntimeException("Email đã được sử dụng");
         }
 
-        // Bước 1.5 Duyệt xem, role gì? (Phải là CUSTOMER.)
+        // CHỌN ROLE CUSTOMER CHO NGƯỜI NÀY. 
         Role role = roleRepository.findByNameRole("CUSTOMER").orElseThrow(() -> new RuntimeException("Lỗi, không tìm thấy role CUSTOMER"));
 
-        // Bước 2: set các thứ
+        // Bước 2: set các thứ MÀ CUSTOMER CẦN
         Customer customer = new Customer();
         customer.setEmail(email);
         customer.setHashPassword(passwordEncoder.encode(password));

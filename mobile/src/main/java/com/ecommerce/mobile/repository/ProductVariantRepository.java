@@ -13,10 +13,14 @@ import com.ecommerce.mobile.entity.ProductVariant;
 @Repository
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long> {
 ///implement by codex
-    @Query("select v from ProductVariant v where v.product.product_id = :productId")
-    List<ProductVariant> findByProductId(@Param("productId") Long productId);
+/// // tìm kiếm sản phẩm bằng productId (phải có query.)
+ //  tìm bằng product Id
+ @Query ("""
+         select v from ProductVariant v where v.product.product_id = :productId
+         """)
+    List<ProductVariant> findByProductId(@Param ("productId") Long productId);
+// me implement.
+    Optional<ProductVariant> findBySku(String sku);// tìm bằng sku
 
-    Optional<ProductVariant> findBySku(String sku);
-
-    List<ProductVariant> findByStockQtyLessThanEqual(Integer stockQty);
+    List<ProductVariant> findByStockQtyLessThanEqual(Integer stockQty); // tìm sản phẩm mà tồn kho <  yêu cầu
 }
