@@ -3,6 +3,10 @@ package com.ecommerce.mobile.controller;
 import com.ecommerce.mobile.entity.Product;
 import com.ecommerce.mobile.enums.ProductStatus;
 import com.ecommerce.mobile.repository.ProductRepository;
+import com.ecommerce.mobile.service.ProductService;
+
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,40 +25,35 @@ public class ProductController {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private ProductService productService;
+
     @GetMapping("/products")
-    public String listProducts(
-            @RequestParam(name = "keyword", required = false) String keyword,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            Model model) {
+public String listProducts(
+        @RequestParam(name = "keyword", required = false) String keyword,
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        Model model) {
 
-        PageRequest pageable = PageRequest.of(
-                Math.max(page, 0),
-                DEFAULT_PAGE_SIZE,
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+    Page<Product> products = productService.getActiveProducts(keyword, page, 8);
 
-        String normalizedKeyword = keyword == null ? "" : keyword.trim();
-        Page<Product> products = normalizedKeyword.isEmpty()
-                ? productRepository.findByStatus(ProductStatus.ACTIVE, pageable)
-                : productRepository.searchByStatusAndKeyword(ProductStatus.ACTIVE, normalizedKeyword, pageable);
+    model.addAttribute("products", products);
+    model.addAttribute("keyword", keyword == null ? "" : keyword.trim());
 
-        model.addAttribute("products", products);
-        model.addAttribute("keyword", normalizedKeyword);
-        return "product/list";
-    }
-
-    @GetMapping("/products/{id}")
-    public String productDetail(@PathVariable Long id, Model model) {
-        Product product = productRepository.findById(id)
-                .filter(p -> p.getStatus() == ProductStatus.ACTIVE)
-                .orElse(null);
-
-        if (product == null) {
-            return "redirect:/products?error=not-found";
-        }
-
-        model.addAttribute("product", product);
-        return "product/detail";
-
-        // cái này nghiên cưu sau
-    }
+    return "product/list";
 }
+
+
+@GetMapping("/products/{id}")
+public String productDetail(@PathVariable Long id, Model model) {
+
+    Product product = productService.getActiveProductById(id);
+
+    if (product == null) {
+        return "redirect:/products?error=not-found";
+    }
+
+    model.addAttribute("product", product);
+    return "product/detail";
+}
+}
+
