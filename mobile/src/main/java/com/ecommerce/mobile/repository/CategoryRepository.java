@@ -13,7 +13,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     Optional<Category> findBySlug(String slug); // hàm tìm bởi seo?
 
-    List<Category> findByIsActiveTrue();
- 
-    List<Category> findByParentIsNull(); // hàm tìm category đang hoạt đông?
-}
+    List<Category> findByIsActiveTrue();// hàm tìm category đang hoạt đông?
+
+    Category findByName(String name);
+
+
+    List<Category> findByParentIsNull();
+} 

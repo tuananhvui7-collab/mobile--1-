@@ -44,15 +44,14 @@ public class ProductService {
         return categoryRepository.findByIsActiveTrue();
     }
 
-    // lấy sản phẩm status ACTIVE.
+    // lấy sản phẩm status ACTIVE, phân trang đàng hoàng
     public Page<Product> getActiveProducts(String keyword, int page, int size){
 
         Pageable pageable = PageRequest.of(
             Math.max(page, 0),
             size,
             Sort.by(Sort.Direction.DESC,"createdAt")
-        );
-
+        ); // tạo lệnh phân trang, tham số trang CHẮC CHẮN KHÔNG ÂM , tham số size: số phần tử trong 1 trang, tham số lọc trang theo createdAt. 
         String normalizedKeyword = keyword == null ? "" : keyword.trim(); 
         // DÒNG NÀY CÓ NGHĨA LÀ IF (KEYWORD == NULL){ cái này có nghĩa là chuẩn hóa từ khóa, nếu nó null thì return "" còn k null thì trim nó.
         /// RETURN " "
@@ -74,7 +73,7 @@ public class ProductService {
             /// có nghĩa là khi k có từ khóa thì hiển thị toàn bộ ản phẩm active, nếu có thì tìm kiếm nó.
     }    
 
-    //LẤY SẢN PHẨM BẰNG ID , THÊM CẢ STATUS FILTER. 
+    // HÀM LẤY SẢN PHẨM BẰNG ID , THÊM CẢ  FILTER STATUS ACTIVE. 
     public Product getActiveProductById(Long id) {
     return productRepository.findById(id)
             .filter(p -> p.getStatus() == ProductStatus.ACTIVE)
