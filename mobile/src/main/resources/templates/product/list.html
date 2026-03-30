@@ -56,7 +56,7 @@ Không tìm thấy sản phẩm phù hợp    </div>
                     <h5 class="card-title" th:text="${product.name}">Tên sản phẩm</h5>
                     <p class="text-muted" th:text="${product.brand}">Hãng</p>
                     <!-- th:href: tao link /products/1, /products/2... -->
-                    <a th:href="@{/products/{id}(id=${product.product_id})}"
+                    <a th:href="@{/products/{id}(id=${product.productId})}"
                        class="btn btn-outline-primary btn-sm">
 Xem chi tiết                    </a>
                 </div>
@@ -97,4 +97,3 @@ Xem chi tiết                    </a>
     </nav>
 </div>
 </body></html>
-

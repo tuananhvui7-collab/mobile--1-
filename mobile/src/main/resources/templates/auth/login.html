@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"> <!--Cho phép sử dụng cú pháp thymeleaf-->
 <head>
     <meta charset="UTF-8">
     <title>Đăng nhập — PhoneShop</title>
@@ -40,13 +40,13 @@
         <!-- CSRF token: BẮT BUỘC trong MỌI form POST, nếu thiếu → lỗi 403 -->
         <input type="hidden"
                th:name="${_csrf.parameterName}"
-               th:value="${_csrf.token}">
+               th:value="${_csrf.token}">       <!-- Bắt buộc trong mọi form POST để tránh lỗi 403. Spring Security tự sinh _csrf.token và _csrf.parameterName.-->
         <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
     </form>
 
     <p class="mt-3 text-center">
         Chưa có tài khoản?
-        <a th:href="@{/register}">Đăng ký ngay</a>
+        <a th:href="@{/register}">Đăng ký ngay</a> <!-- th: href-->
     </p>
 </div>
 </body>

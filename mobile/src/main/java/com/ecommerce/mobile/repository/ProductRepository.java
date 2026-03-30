@@ -1,9 +1,12 @@
 package com.ecommerce.mobile.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,4 +45,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByBrandAndStatus(String brand, ProductStatus status); // tìm sản phẩm bằng hãng và status
 
     List<Product> findByCategoryCategoryId(Long categoryId); // tìm bằng categoryId
+
+    Product findByProductId(Long productId);
+
+    @EntityGraph(attributePaths = {"category", "variants", "variants.images"})
+    @Query("select p from Product p where p.productId = :productId")
+    Optional<Product> findDetailedByProductId(@Param("productId") Long productId);
+
+    @EntityGraph(attributePaths = {"category"})
+    @Query("select p from Product p")
+    List<Product> findAllWithCategory(Sort sort);
 }
