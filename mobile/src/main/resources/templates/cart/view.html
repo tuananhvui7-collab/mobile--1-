@@ -7,6 +7,9 @@
 <div class="container mt-4">
     <h3>Gio hang cua toi</h3>
 
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
     <!-- Kiem tra gio co rong khong -->
     <div th:if="${cart.items == null or cart.items.empty}"
          class="alert alert-info">

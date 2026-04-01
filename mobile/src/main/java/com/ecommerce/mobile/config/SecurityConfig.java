@@ -72,6 +72,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/cart/**",        // Gio hang (U5)
                     "/orders/**",      // Don hang (U6, U8, U9)
+                    "/payments/**",    // Thanh toan
                     "/profile/**",     // Thong tin ca nhan (U11)
                     "/api/customer/**"
                 ).hasRole("CUSTOMER")

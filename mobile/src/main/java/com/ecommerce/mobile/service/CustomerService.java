@@ -10,7 +10,7 @@ import com.ecommerce.mobile.entity.Role;
 import com.ecommerce.mobile.repository.AddressRepository;
 import com.ecommerce.mobile.repository.CustomerRepository;
 import com.ecommerce.mobile.repository.RoleRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 
 // Luồng chính luôn là:
@@ -31,9 +31,8 @@ public class CustomerService {
     @Autowired 
     private AddressRepository addressRepository;
 
-    @Transactional
-
     // Luồng đăng ký kiểm tra email -> lấy role -> tạo customer -> lưu DB
+    @Transactional
     public Customer register(String email, String password, String fullName, String phone){
         // BƯỚC 1: duyệt email tài khoản
         if (customerRepository.existsByEmail(email)){
@@ -56,14 +55,25 @@ public class CustomerService {
     return customerRepository.save(customer);
 
     }
+
+    @Transactional(readOnly = true)
+    public Customer requireCustomerByEmail(String email) {
+        return customerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản khách hàng"));
+    }
+
    // cập nhật thông tin
+    @Transactional
     public Customer updateCustomerInfo(Long userId, String fullName, String phone){
+        if (fullName == null || fullName.isBlank()) {
+            throw new RuntimeException("Họ và tên không được để trống");
+        }
         // gọi Customer từ DB (repository)
         @SuppressWarnings("null") // cảnh báo null cho userID
         Customer customer = customerRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Khong tim thay tai khoan!"));
-            customer.setFullName(fullName);
-            customer.setPhone(phone);
+            customer.setFullName(fullName.trim());
+            customer.setPhone(phone == null || phone.isBlank() ? null : phone.trim());
         
         return customerRepository.save(customer);
 
@@ -85,18 +95,66 @@ public class CustomerService {
         }
 
      // Thêm địa chỉ
-     @Transactional
-     public Address addAddress(String street, String city, Long customerId, String phone){
-        // lấy id của người thay đổi địa chỉ để thay đổi cho họ. 
-          Customer customer = customerRepository.findById(customerId)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+    @Transactional
+    public Address addAddress(String street, String city, Long customerId, String phone){
+        return addAddress(customerId, street, null, null, city, phone, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Address> getAddresses(Long customerId) {
+        return addressRepository.findByCustomerUserIDOrderByIsDefaultDescCreatedAtDesc(customerId);
+    }
+
+    @Transactional(readOnly = true)
+    public Address getAddressForCustomer(Long customerId, Long addressId) {
+        return addressRepository.findByAddressIdAndCustomerUserID(addressId, customerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+    }
+
+    @Transactional
+    public Address addAddress(Long customerId,
+                              String street,
+                              String ward,
+                              String district,
+                              String city,
+                              String phone,
+                              boolean setDefault) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+
         Address address = new Address();
-        address.setStreet(street);
-        address.setCity(city);
-        address.setPhone(phone);
+        address.setStreet(street == null ? null : street.trim());
+        address.setWard(ward == null || ward.isBlank() ? null : ward.trim());
+        address.setDistrict(district == null || district.isBlank() ? null : district.trim());
+        address.setCity(city == null ? null : city.trim());
+        address.setPhone(phone == null || phone.isBlank() ? null : phone.trim());
         address.setCustomer(customer);
-        address.setIsDefault(false);
-        return addressRepository.save(address);}
+
+        boolean hasAnyAddress = !addressRepository.findByCustomerUserID(customerId).isEmpty();
+        address.setIsDefault(setDefault || !hasAnyAddress);
+
+        if (address.getIsDefault()) {
+            clearDefaultAddresses(customerId);
+        }
+        return addressRepository.save(address);
+    }
+
+    @Transactional
+    public Address updateAddress(Long customerId,
+                                 Long addressId,
+                                 String street,
+                                 String ward,
+                                 String district,
+                                 String city,
+                                 String phone) {
+        Address address = getAddressForCustomer(customerId, addressId);
+        address.setStreet(street == null ? null : street.trim());
+        address.setWard(ward == null || ward.isBlank() ? null : ward.trim());
+        address.setDistrict(district == null || district.isBlank() ? null : district.trim());
+        address.setCity(city == null ? null : city.trim());
+        address.setPhone(phone == null || phone.isBlank() ? null : phone.trim());
+        return addressRepository.save(address);
+    }
             
         
         
@@ -104,15 +162,31 @@ public class CustomerService {
     
     @Transactional
     public void setDefaultAddress(Long customerId, Long addressId){
-
-///  bỏ nhãn mặc định cho tất cả các địa chỉ
-        List<Address> all = addressRepository.findByCustomerUserID(customerId);
-        all.forEach(a -> a.setIsDefault(false)); // chỗ này chưa thạo (vừa lambda vừa forEach)
-        addressRepository.saveAll(all);
-
-        @SuppressWarnings("null") //  bỏ qua cảnh báo addressId null. Cần sửa lỗi trogn tương lai
-        Address address = addressRepository.findById(addressId).orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+        clearDefaultAddresses(customerId);
+        Address address = getAddressForCustomer(customerId, addressId);
         address.setIsDefault(true);
         addressRepository.save(address);
+    }
+
+    @Transactional
+    public void deleteAddress(Long customerId, Long addressId) {
+        Address address = getAddressForCustomer(customerId, addressId);
+        boolean wasDefault = Boolean.TRUE.equals(address.getIsDefault());
+        addressRepository.delete(address);
+
+        if (wasDefault) {
+            List<Address> remaining = addressRepository.findByCustomerUserIDOrderByIsDefaultDescCreatedAtDesc(customerId);
+            if (!remaining.isEmpty()) {
+                Address first = remaining.get(0);
+                first.setIsDefault(true);
+                addressRepository.save(first);
+            }
+        }
+    }
+
+    private void clearDefaultAddresses(Long customerId) {
+        List<Address> all = addressRepository.findByCustomerUserID(customerId);
+        all.forEach(a -> a.setIsDefault(false));
+        addressRepository.saveAll(all);
     }
 }

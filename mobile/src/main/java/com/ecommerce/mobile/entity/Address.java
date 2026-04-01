@@ -43,5 +43,14 @@ public class Address {
     @JoinColumn(name = "user_id")
     private Customer customer;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.isDefault == null) {
+            this.isDefault = false;
+        }
+    }
     
 }

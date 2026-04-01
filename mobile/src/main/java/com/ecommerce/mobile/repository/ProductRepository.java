@@ -19,8 +19,11 @@ import com.ecommerce.mobile.enums.ProductStatus;
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
 
+    // Chỉ fetch category + variants: thêm variants.images cùng lúc gây MultipleBagFetchException với List (bag).
+    @EntityGraph(attributePaths = {"category", "variants"})
     Page<Product> findByStatus(ProductStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "variants"})
     @Query("""
                 select  p 
                 from Product p
@@ -48,7 +51,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Product findByProductId(Long productId);
 
-    @EntityGraph(attributePaths = {"category", "variants", "variants.images"})
+    @EntityGraph(attributePaths = {"category", "variants"})
     @Query("select p from Product p where p.productId = :productId")
     Optional<Product> findDetailedByProductId(@Param("productId") Long productId);
 

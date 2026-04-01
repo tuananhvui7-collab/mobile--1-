@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*; //phân trang thư viện
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ecommerce.mobile.entity.Category;
 import com.ecommerce.mobile.entity.Product;
 import com.ecommerce.mobile.enums.ProductStatus;
@@ -75,8 +76,15 @@ public class ProductService {
 
     // HÀM LẤY SẢN PHẨM BẰNG ID , THÊM CẢ  FILTER STATUS ACTIVE. 
     public Product getActiveProductById(Long id) {
-    return productRepository.findById(id)
-            .filter(p -> p.getStatus() == ProductStatus.ACTIVE)
-            .orElse(null);
-}
+        return productRepository.findDetailedByProductId(id)
+                .filter(p -> p.getStatus() == ProductStatus.ACTIVE)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public Product getActiveProductDetailById(Long id) {
+        return productRepository.findDetailedByProductId(id)
+                .filter(p -> p.getStatus() == ProductStatus.ACTIVE)
+                .orElse(null);
+    }
 }
