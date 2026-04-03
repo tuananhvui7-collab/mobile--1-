@@ -43,6 +43,11 @@ public class Product {
         @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<ProductVariant> variants;
+
+    @OneToMany(mappedBy = "product")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Review> reviews;
     
     @PrePersist
     public void prePersit(){

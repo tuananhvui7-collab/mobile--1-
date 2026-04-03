@@ -45,6 +45,30 @@ public class Payment {
     @Column(name = "transaction_ref", unique = true, length = 100)
     private String transactionRef;
 
+    @Column(name = "gateway_transaction_no", length = 50)
+    private String gatewayTransactionNo;
+
+    @Column(name = "bank_transaction_no", length = 50)
+    private String bankTransactionNo;
+
+    @Column(name = "bank_code", length = 20)
+    private String bankCode;
+
+    @Column(name = "card_type", length = 20)
+    private String cardType;
+
+    @Column(name = "response_code", length = 10)
+    private String responseCode;
+
+    @Column(name = "transaction_status", length = 10)
+    private String transactionStatus;
+
+    @Column(name = "pay_date", length = 20)
+    private String payDate;
+
+    @Column(name = "response_message", length = 255)
+    private String responseMessage;
+
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 

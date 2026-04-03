@@ -21,7 +21,7 @@ public class Cart {
     private Long cartId;
 
     @OneToOne(optional = false)
-    @JoinColumn(name = "customer_id", nullable = false, unique = true)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Customer customer;

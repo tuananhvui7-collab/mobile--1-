@@ -40,14 +40,18 @@
                 Đơn hàng thanh toán khi nhận hàng. Trạng thái thanh toán sẽ được cập nhật sau.
             </p>
             <p class="mb-3" th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY}">
-                Đây là màn thanh toán mô phỏng. Bạn có thể xác nhận thanh toán để chuyển sang trạng thái SUCCESS.
+                Đây là màn thanh toán VNPAY sandbox. Bấm nút bên dưới để chuyển sang cổng thanh toán.
             </p>
 
-            <form th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY and payment.status == T(com.ecommerce.mobile.enums.PaymentStatus).PENDING}"
-                  th:action="@{/payments/{id}/confirm(id=${payment.paymentId})}" method="post">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <button type="submit" class="btn btn-primary">Xác nhận đã thanh toán</button>
-            </form>
+            <div class="d-flex gap-2 flex-wrap">
+                <a th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY and payment.status != T(com.ecommerce.mobile.enums.PaymentStatus).SUCCESS}"
+                   th:href="@{/payments/{id}/vnpay(id=${payment.paymentId})}"
+                   class="btn btn-primary">Thanh toán qua VNPAY</a>
+                <div th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).COD}"
+                     class="text-muted small align-self-center">
+                    Không cần thanh toán online với COD.
+                </div>
+            </div>
         </div>
     </div>
 </div>

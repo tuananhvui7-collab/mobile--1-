@@ -2,6 +2,8 @@ package com.ecommerce.mobile.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import com.ecommerce.mobile.entity.OrderItem;
 import com.ecommerce.mobile.entity.ProductVariant;
 import com.ecommerce.mobile.enums.OrderStatus;
 import com.ecommerce.mobile.enums.PaymentMethod;
+import com.ecommerce.mobile.enums.PaymentStatus;
 import com.ecommerce.mobile.repository.OrderRepository;
 
 @Service
@@ -24,15 +27,18 @@ public class OrderService {
     private final CustomerService customerService;
     private final OrderRepository orderRepository;
     private final PaymentService paymentService;
+    private final ShipmentService shipmentService;
 
     public OrderService(CartService cartService,
                         CustomerService customerService,
                         OrderRepository orderRepository,
-                        PaymentService paymentService) {
+                        PaymentService paymentService,
+                        ShipmentService shipmentService) {
         this.cartService = cartService;
         this.customerService = customerService;
         this.orderRepository = orderRepository;
         this.paymentService = paymentService;
+        this.shipmentService = shipmentService;
     }
 
     @Transactional
@@ -40,6 +46,8 @@ public class OrderService {
                             String shippingName,
                             String shippingPhone,
                             String shippingAddress,
+                            String shippingWard,
+                            String shippingDistrict,
                             String shippingCity,
                             String voucherCode,
                             PaymentMethod paymentMethod,
@@ -62,6 +70,8 @@ public class OrderService {
         order.setShippingName(shippingName);
         order.setShippingPhone(shippingPhone);
         order.setShippingAddress(shippingAddress);
+        order.setShippingWard(shippingWard);
+        order.setShippingDistrict(shippingDistrict);
         order.setShippingCity(shippingCity);
         order.setAppliedVoucher(voucherCode == null || voucherCode.isBlank() ? null : voucherCode.trim());
         order.setShippingFee(BigDecimal.ZERO);
@@ -116,6 +126,211 @@ public class OrderService {
                 .filter(order -> order.getCustomer() != null
                         && order.getCustomer().getUserID().equals(customer.getUserID()))
                 .orElse(null);
+    }
+
+    @Transactional
+    public Order cancelOrderByCustomerEmail(String customerEmail, Long orderId, String reason) {
+        Customer customer = customerService.requireCustomerByEmail(customerEmail);
+        Order order = orderRepository.findDetailedByOrderId(orderId)
+                .filter(o -> o.getCustomer() != null
+                        && o.getCustomer().getUserID().equals(customer.getUserID()))
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (!canCustomerCancel(order.getStatus())) {
+            throw new RuntimeException("Đơn hàng không thể hủy ở trạng thái hiện tại");
+        }
+
+        return cancelOrderInternal(order, reason, "Khách hàng hủy đơn");
+    }
+
+    @Transactional(readOnly = true)
+    public List<Order> getAllOrdersForStaff() {
+        return orderRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
+    public Order getOrderForStaff(Long orderId) {
+        return orderRepository.findDetailedByOrderId(orderId).orElse(null);
+    }
+
+    @Transactional
+    public Order receiveOrderForStaff(Long orderId) {
+        Order order = orderRepository.findDetailedByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new RuntimeException("Đơn hàng đã hủy, không thể tiếp nhận");
+        }
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new RuntimeException("Đơn hàng đã giao, không thể tiếp nhận");
+        }
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Chỉ có thể tiếp nhận đơn ở trạng thái chờ xác nhận");
+        }
+
+        if (order.getPaymentMethod() == PaymentMethod.VN_PAY) {
+            if (order.getLatestPayment() == null || order.getLatestPayment().getStatus() != PaymentStatus.SUCCESS) {
+                throw new RuntimeException("Đơn VN_PAY chưa thanh toán thành công, không thể tiếp nhận");
+            }
+        }
+
+        if (order.getLatestPayment() != null
+                && order.getPaymentMethod() == PaymentMethod.COD
+                && order.getLatestPayment().getStatus() == PaymentStatus.PENDING) {
+            order.getLatestPayment().setResponseMessage("Nhân viên đã tiếp nhận đơn COD, chờ thu tiền khi giao hàng.");
+        }
+
+        order.setStatus(OrderStatus.CONFIRMED);
+        Order saved = orderRepository.save(order);
+        shipmentService.recordLocalOrderStatus(saved, OrderStatus.CONFIRMED);
+        return saved;
+    }
+
+    @Transactional
+    public Order advanceOrderStatusForStaff(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findDetailedByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (newStatus == null) {
+            throw new RuntimeException("Trạng thái không hợp lệ");
+        }
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new RuntimeException("Đơn hàng đã hủy, không thể thay đổi trạng thái");
+        }
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new RuntimeException("Đơn hàng đã giao, không thể thay đổi trạng thái");
+        }
+        if (newStatus == OrderStatus.CANCELLED) {
+            return cancelOrderInternal(order, "Nhân viên hủy đơn", "Nhân viên hủy đơn");
+        }
+
+        if (!isNextStaffStatus(order.getStatus(), newStatus)) {
+            throw new RuntimeException("Chỉ được chuyển sang bước kế tiếp của đơn hàng");
+        }
+
+        if (order.getStatus() == OrderStatus.PENDING && newStatus == OrderStatus.CONFIRMED) {
+            ensurePaymentReadyForReception(order);
+        }
+
+        order.setStatus(newStatus);
+        appendStatusNote(order, newStatus);
+        Order saved = orderRepository.save(order);
+        shipmentService.recordLocalOrderStatus(saved, newStatus);
+        return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderStatus> getAllowedNextStatusesForStaff(Long orderId) {
+        Order order = orderRepository.findDetailedByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.DELIVERED) {
+            return Collections.emptyList();
+        }
+
+        List<OrderStatus> statuses = new ArrayList<>();
+        if (order.getStatus() == OrderStatus.PENDING) {
+            statuses.add(OrderStatus.CONFIRMED);
+        } else if (order.getStatus() == OrderStatus.CONFIRMED) {
+            statuses.add(OrderStatus.PACKING);
+        } else if (order.getStatus() == OrderStatus.PACKING) {
+            statuses.add(OrderStatus.SHIPPING);
+        } else if (order.getStatus() == OrderStatus.SHIPPING) {
+            statuses.add(OrderStatus.DELIVERED);
+        }
+        return statuses;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean canStaffCancel(Order order) {
+        return order != null
+                && order.getStatus() != OrderStatus.CANCELLED
+                && order.getStatus() != OrderStatus.DELIVERED;
+    }
+
+    @Transactional(readOnly = true)
+    public String getStaffStatusGuide(Order order) {
+        if (order == null) {
+            return "—";
+        }
+        return switch (order.getStatus()) {
+            case PENDING -> "Nhân viên kiểm tra đơn và thanh toán, rồi tiếp nhận.";
+            case CONFIRMED -> "Đơn đã được tiếp nhận, chuẩn bị sang bước đóng gói.";
+            case PACKING -> "Kho đang đóng gói, sau đó bàn giao giao hàng.";
+            case SHIPPING -> "Đơn đang trên đường giao.";
+            case DELIVERED -> "Đơn đã giao thành công.";
+            case CANCELLED -> "Đơn đã bị hủy.";
+        };
+    }
+
+    private Order cancelOrderInternal(Order order, String reason, String actorLabel) {
+        if (order.getItems() != null) {
+            for (OrderItem item : order.getItems()) {
+                if (item == null || item.getVariant() == null || item.getQuantity() == null) {
+                    continue;
+                }
+                ProductVariant variant = item.getVariant();
+                Integer currentStock = variant.getStockQty() == null ? 0 : variant.getStockQty();
+                variant.setStockQty(currentStock + item.getQuantity());
+            }
+        }
+
+        if (order.getPayments() != null) {
+            order.getPayments().forEach(payment -> {
+                if (payment.getStatus() == PaymentStatus.SUCCESS) {
+                    payment.setStatus(PaymentStatus.REFUNDED);
+                    payment.setResponseMessage("Đơn hàng đã bị hủy. Đã hoàn tiền.");
+                } else if (payment.getStatus() == PaymentStatus.PENDING) {
+                    payment.setStatus(PaymentStatus.FAILED);
+                    payment.setResponseMessage(actorLabel + (reason == null || reason.isBlank() ? "" : ": " + reason.trim()));
+                }
+            });
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        Order saved = orderRepository.save(order);
+        shipmentService.recordLocalOrderStatus(saved, OrderStatus.CANCELLED);
+        return saved;
+    }
+
+    private boolean isNextStaffStatus(OrderStatus current, OrderStatus target) {
+        return (current == OrderStatus.PENDING && target == OrderStatus.CONFIRMED)
+                || (current == OrderStatus.CONFIRMED && target == OrderStatus.PACKING)
+                || (current == OrderStatus.PACKING && target == OrderStatus.SHIPPING)
+                || (current == OrderStatus.SHIPPING && target == OrderStatus.DELIVERED);
+    }
+
+    private void ensurePaymentReadyForReception(Order order) {
+        if (order.getPaymentMethod() == PaymentMethod.VN_PAY) {
+            if (order.getLatestPayment() == null || order.getLatestPayment().getStatus() != PaymentStatus.SUCCESS) {
+                throw new RuntimeException("Đơn VN_PAY chưa thanh toán thành công, không thể tiếp nhận");
+            }
+            return;
+        }
+        if (order.getPaymentMethod() == PaymentMethod.COD) {
+            if (order.getLatestPayment() == null) {
+                throw new RuntimeException("Đơn COD chưa có bản ghi thanh toán");
+            }
+            if (order.getLatestPayment().getStatus() == PaymentStatus.FAILED) {
+                throw new RuntimeException("Thanh toán COD đang ở trạng thái lỗi, không thể tiếp nhận");
+            }
+        }
+    }
+
+    private void appendStatusNote(Order order, OrderStatus newStatus) {
+        if (order.getLatestPayment() == null) {
+            return;
+        }
+        switch (newStatus) {
+            case CONFIRMED -> order.getLatestPayment().setResponseMessage("Đơn hàng đã được tiếp nhận.");
+            case PACKING -> order.getLatestPayment().setResponseMessage("Đơn hàng đang được đóng gói.");
+            case SHIPPING -> order.getLatestPayment().setResponseMessage("Đơn hàng đang được giao.");
+            case DELIVERED -> order.getLatestPayment().setResponseMessage("Đơn hàng đã giao thành công.");
+            default -> { }
+        }
+    }
+
+    private boolean canCustomerCancel(OrderStatus status) {
+        return status == OrderStatus.PENDING || status == OrderStatus.CONFIRMED;
     }
 
     private String generateOrderCode() {

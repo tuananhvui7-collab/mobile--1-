@@ -33,12 +33,34 @@
             <tr th:each="order : ${orders}">
                 <td th:text="${order.orderCode}">ORD-0000</td>
                 <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">—</td>
-                <td th:text="${order.status}">PENDING</td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${order.status == T(com.ecommerce.mobile.enums.OrderStatus).CANCELLED ? ' bg-secondary' :
+                                           (order.status == T(com.ecommerce.mobile.enums.OrderStatus).DELIVERED ? ' bg-success' :
+                                           (order.status == T(com.ecommerce.mobile.enums.OrderStatus).SHIPPING ? ' bg-info' :
+                                           (order.status == T(com.ecommerce.mobile.enums.OrderStatus).PACKING ? ' bg-warning text-dark' :
+                                           (order.status == T(com.ecommerce.mobile.enums.OrderStatus).CONFIRMED ? ' bg-primary' : ' bg-danger'))))}"
+                          th:text="${order.status}">PENDING</span>
+                </td>
                 <td th:text="${order.paymentMethod}">COD</td>
                 <td th:text="${order.latestPayment != null ? order.latestPayment.status : '—'}">PENDING</td>
                 <td th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')}">0</td>
                 <td class="text-end">
-                    <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn btn-sm btn-primary">Chi tiết</a>
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn btn-sm btn-primary">Chi tiết</a>
+                        <a th:if="${order.status != T(com.ecommerce.mobile.enums.OrderStatus).PENDING}"
+                           th:href="@{/orders/{id}/tracking(id=${order.orderId})}"
+                           class="btn btn-sm btn-outline-primary">Theo dõi</a>
+                        <form th:if="${order.status == T(com.ecommerce.mobile.enums.OrderStatus).PENDING or order.status == T(com.ecommerce.mobile.enums.OrderStatus).CONFIRMED}"
+                              th:action="@{/orders/{id}/cancel(id=${order.orderId})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <input type="hidden" name="reason" value="Khách hàng hủy từ danh sách đơn">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                                Hủy
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             </tbody>

@@ -36,6 +36,7 @@ public class CustomUserDetailsService implements UserDetailsService { //debug 1:
          // Bước 3: lấy quyền theo role nếu trải qua 2 bước kiểm duyệt
 
          // Chỗ này thực ra chưa hiểu lắm.
+         // Phân quyền?
          GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getNameRole());
 
 

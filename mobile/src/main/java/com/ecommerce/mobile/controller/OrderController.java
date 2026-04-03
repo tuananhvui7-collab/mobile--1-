@@ -75,6 +75,12 @@ public class OrderController {
                 ? selectedAddress.getPhone()
                 : customer.getPhone());
         model.addAttribute("shippingAddress", selectedAddress != null ? composeAddress(selectedAddress) : "");
+        model.addAttribute("shippingWard", selectedAddress != null && selectedAddress.getWard() != null
+                ? selectedAddress.getWard()
+                : "");
+        model.addAttribute("shippingDistrict", selectedAddress != null && selectedAddress.getDistrict() != null
+                ? selectedAddress.getDistrict()
+                : "");
         model.addAttribute("shippingCity", selectedAddress != null && selectedAddress.getCity() != null
                 ? selectedAddress.getCity()
                 : "");
@@ -86,6 +92,8 @@ public class OrderController {
                              @RequestParam String shippingName,
                              @RequestParam String shippingPhone,
                              @RequestParam String shippingAddress,
+                             @RequestParam(required = false) String shippingWard,
+                             @RequestParam(required = false) String shippingDistrict,
                              @RequestParam String shippingCity,
                              @RequestParam(required = false) String voucherCode,
                              @RequestParam String paymentMethod,
@@ -98,6 +106,8 @@ public class OrderController {
                     shippingName,
                     shippingPhone,
                     shippingAddress,
+                    shippingWard,
+                    shippingDistrict,
                     shippingCity,
                     voucherCode,
                     method,
@@ -105,8 +115,7 @@ public class OrderController {
             );
             redirectAttributes.addFlashAttribute("success", "Đặt hàng thành công: " + order.getOrderCode());
             if (method == PaymentMethod.VN_PAY && order.getLatestPayment() != null) {
-                redirectAttributes.addFlashAttribute("success", "Đơn hàng đã tạo. Hãy hoàn tất thanh toán.");
-                return "redirect:/payments/" + order.getLatestPayment().getPaymentId();
+                return "redirect:/payments/" + order.getLatestPayment().getPaymentId() + "/vnpay";
             }
             return "redirect:/orders/" + order.getOrderId();
         } catch (RuntimeException ex) {
@@ -135,6 +144,21 @@ public class OrderController {
 
         model.addAttribute("order", order);
         return "order/detail";
+    }
+
+    @PostMapping("/orders/{orderId}/cancel")
+    public String cancelOrder(@AuthenticationPrincipal UserDetails principal,
+                              @PathVariable Long orderId,
+                              @RequestParam(required = false) String reason,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            Order order = orderService.cancelOrderByCustomerEmail(principal.getUsername(), orderId, reason);
+            redirectAttributes.addFlashAttribute("success", "Đã hủy đơn hàng " + order.getOrderCode());
+            return "redirect:/orders/" + orderId;
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/orders/" + orderId;
+        }
     }
 
     private String composeAddress(Address address) {

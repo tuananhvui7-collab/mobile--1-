@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import com.ecommerce.mobile.enums.OrderStatus;
 import com.ecommerce.mobile.enums.PaymentMethod;
@@ -21,6 +23,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -80,6 +83,12 @@ public class Order {
     @Column(name = "shipping_address", nullable = false, length = 255)
     private String shippingAddress;
 
+    @Column(name = "shipping_ward", length = 100)
+    private String shippingWard;
+
+    @Column(name = "shipping_district", length = 100)
+    private String shippingDistrict;
+
     @Column(name = "shipping_city", nullable = false, length = 100)
     private String shippingCity;
 
@@ -99,7 +108,12 @@ public class Order {
     @OrderBy("createdAt DESC")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private List<Payment> payments = new ArrayList<>();
+    private Set<Payment> payments = new LinkedHashSet<>();
+
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Shipment shipment;
 
     @PrePersist
     public void prePersist() {

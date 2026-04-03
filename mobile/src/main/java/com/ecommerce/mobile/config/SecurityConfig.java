@@ -22,6 +22,9 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService customUserDetailsService; 
 
+    @Autowired
+    private RoleBasedSuccessHandler roleBasedSuccessHandler;
+
         // thêm injection class vào.
 
 
@@ -44,12 +47,19 @@ public class SecurityConfig {
             // ===== PHAN QUYEN URL =====
             .authorizeHttpRequests(auth -> auth // hàm lambda, tượng trưng cho annonymous class, k cần khai báo class vẫn vt dc thân hàm. Dành cho các interface chỉ có 1 hàm
 
+                // REVIEW: phải kiểm tra trước /products/** để không bị public nhầm
+                .requestMatchers(
+                    "/products/*/reviews/**",
+                    "/products/*/reviews"
+                ).hasRole("CUSTOMER")
+
                 // CONG KHAI -- ai cung vao duoc, khong can dang nhap
                 .requestMatchers( // map người dùng vào những trang
                     "/",               // Trang chu
                     "/products/**",    // Xem san pham (U4)
                     "/login",          // Trang dang nhap (U1)
                     "/register",       // Trang dang ky (U3)
+                    "/webhooks/ghn/**",
                     "/css/**",         // File CSS
                     "/js/**",          // File JavaScript
                     "/images/**",      // Anh tinh
@@ -70,6 +80,7 @@ public class SecurityConfig {
 
                 // CHI CUSTOMER da dang nhap
                 .requestMatchers(
+                    "/payments/vnpay/**",
                     "/cart/**",        // Gio hang (U5)
                     "/orders/**",      // Don hang (U6, U8, U9)
                     "/payments/**",    // Thanh toan
@@ -85,7 +96,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")          // URL trang login tuy chinh
                 .loginProcessingUrl("/login") // URL xu ly POST form
-                .defaultSuccessUrl("/")       // Dang nhap thanh cong -> trang chu
+                .successHandler(roleBasedSuccessHandler) // Dieu huong theo vai tro
                 .failureUrl("/login?error")   // Sai mat khau -> them ?error
                 .permitAll()                  // Ai cung vao duoc trang login
             )

@@ -172,7 +172,7 @@
                         <img th:src="${src}" th:alt="${product.name}" loading="lazy">
                     </th:block>
                     <th:block th:unless="${H.isAbsoluteUrl(src)}">
-                        <img th:src="@{${src}}" th:alt="${product.name}" loading="lazy">
+                        <img th:src="${src}" th:alt="${product.name}" loading="lazy">
                     </th:block>
                 </div>
                 <div class="card-body d-flex flex-column">
@@ -194,7 +194,7 @@
 
     <nav th:if="${products.totalPages > 1}" class="mt-5" aria-label="Phân trang">
         <ul class="pagination justify-content-center mb-0">
-            <li class="page-item" th:classappend="${products.first} ? 'disabled'">
+            <li class="page-item" th:classappend="${products.first} ? 'disabled' : ''">
                 <a class="page-link"
                    th:href="@{/products(page=${products.number - 1}, keyword=${keyword})}">← Trước</a>
             </li>
@@ -202,7 +202,7 @@
                 <span class="page-link rounded"
                       th:text="${'Trang ' + (products.number + 1) + ' / ' + products.totalPages}">1 / 1</span>
             </li>
-            <li class="page-item" th:classappend="${products.last} ? 'disabled'">
+            <li class="page-item" th:classappend="${products.last} ? 'disabled' : ''">
                 <a class="page-link"
                    th:href="@{/products(page=${products.number + 1}, keyword=${keyword})}">Sau →</a>
             </li>

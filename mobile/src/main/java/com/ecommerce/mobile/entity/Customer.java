@@ -3,6 +3,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import java.util.List;
  
 @Entity
 @DiscriminatorValue("CUSTOMER") // Phân loại dựa trên customer)
@@ -12,5 +14,10 @@ import lombok.NoArgsConstructor;
 
 // điểm khác biệt: Chỉ có giá trị này trong cột mới được phép thêm vào bảng users. 
 public class Customer extends User {
+
+    @OneToMany(mappedBy = "customer")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Review> reviews;
 
 }

@@ -33,7 +33,7 @@ public class CartService {
         this.customerService = customerService;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Cart getCartByCustomerEmail(String email) {
         Customer customer = customerService.requireCustomerByEmail(email);
         return cartRepository.findDetailedByCustomerId(customer.getUserID())

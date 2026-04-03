@@ -62,7 +62,15 @@ public class PaymentService {
         }
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setPaidAt(LocalDateTime.now());
+        if (payment.getOrder() != null) {
+            payment.getOrder().setStatus(com.ecommerce.mobile.enums.OrderStatus.CONFIRMED);
+        }
         return paymentRepository.save(payment);
+    }
+
+    @Transactional(readOnly = true)
+    public Payment getPaymentByTransactionRef(String transactionRef) {
+        return paymentRepository.findByTransactionRef(transactionRef).orElse(null);
     }
 
     private String generateTransactionRef(PaymentMethod method) {

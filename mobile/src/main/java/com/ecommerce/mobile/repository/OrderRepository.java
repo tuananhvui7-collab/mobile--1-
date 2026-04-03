@@ -13,11 +13,14 @@ import com.ecommerce.mobile.entity.Order;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    @EntityGraph(attributePaths = {"items", "items.variant", "items.variant.images", "customer", "payments"})
+    @EntityGraph(attributePaths = {"items", "items.variant", "items.variant.images", "customer", "payments", "shipment"})
     Optional<Order> findDetailedByOrderId(@Param("orderId") Long orderId);
 
-    @EntityGraph(attributePaths = {"items", "items.variant", "items.variant.images", "customer", "payments"})
+    @EntityGraph(attributePaths = {"items", "items.variant", "items.variant.images", "customer", "payments", "shipment"})
     List<Order> findByCustomerUserIDOrderByCreatedAtDesc(Long customerId);
+
+    @EntityGraph(attributePaths = {"items", "items.variant", "items.variant.images", "customer", "payments", "shipment"})
+    List<Order> findAllByOrderByCreatedAtDesc();
 
     Optional<Order> findByOrderCode(String orderCode);
 }

@@ -59,6 +59,16 @@
                    th:value="${shippingAddress}" required>
         </div>
         <div class="mb-3">
+            <label class="form-label">Phường / Xã</label>
+            <input type="text" name="shippingWard" class="form-control"
+                   th:value="${shippingWard}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Quận / Huyện</label>
+            <input type="text" name="shippingDistrict" class="form-control"
+                   th:value="${shippingDistrict}">
+        </div>
+        <div class="mb-3">
             <label class="form-label">Tinh / Thanh pho</label>
             <input type="text" name="shippingCity" class="form-control"
                    th:value="${shippingCity}" required>

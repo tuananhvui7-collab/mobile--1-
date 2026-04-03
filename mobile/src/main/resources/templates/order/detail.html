@@ -47,8 +47,36 @@
                     <div class="text-muted small">Địa chỉ</div>
                     <div class="fw-semibold" th:text="${order.shippingAddress + ', ' + order.shippingCity}">—</div>
                 </div>
+                <div class="col-12" th:if="${order.shippingWard != null or order.shippingDistrict != null}">
+                    <div class="text-muted small">Phường / Quận</div>
+                    <div class="fw-semibold"
+                         th:text="${(order.shippingWard != null ? order.shippingWard : '') + (order.shippingWard != null and order.shippingDistrict != null ? ', ' : '') + (order.shippingDistrict != null ? order.shippingDistrict : '')}">—</div>
+                </div>
             </div>
         </div>
+    </div>
+
+    <div class="mb-4" th:if="${order.shipment != null or order.status != T(com.ecommerce.mobile.enums.OrderStatus).PENDING}">
+        <a th:href="@{/orders/{id}/tracking(id=${order.orderId})}" class="btn btn-outline-primary">
+            Theo dõi vận chuyển
+        </a>
+    </div>
+
+    <div class="mb-4" th:if="${order.status != T(com.ecommerce.mobile.enums.OrderStatus).CANCELLED and (order.status == T(com.ecommerce.mobile.enums.OrderStatus).PENDING or order.status == T(com.ecommerce.mobile.enums.OrderStatus).CONFIRMED)}">
+        <form th:action="@{/orders/{id}/cancel(id=${order.orderId})}" method="post" class="d-flex flex-wrap gap-2 align-items-start">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="flex-grow-1" style="min-width: 240px;">
+                <label class="form-label">Lý do hủy (không bắt buộc)</label>
+                <input type="text" name="reason" class="form-control" placeholder="Ví dụ: đặt nhầm sản phẩm">
+            </div>
+            <div class="pt-4">
+                <button type="submit" class="btn btn-danger">Hủy đơn hàng</button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${order.status == T(com.ecommerce.mobile.enums.OrderStatus).CANCELLED}" class="alert alert-warning">
+        Đơn hàng đã bị hủy.
     </div>
 
     <div class="mb-4" th:if="${order.latestPayment != null and order.latestPayment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY and order.latestPayment.status == T(com.ecommerce.mobile.enums.PaymentStatus).PENDING}">
