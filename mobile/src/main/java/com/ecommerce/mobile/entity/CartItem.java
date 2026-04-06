@@ -40,19 +40,28 @@ public class CartItem {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
+    @Column(name = "subtotal", nullable = false, precision = 19, scale = 2)
+    private BigDecimal subtotal = BigDecimal.ZERO;
+
     @Column(name = "added_at")
     private LocalDateTime addedAt;
 
     @PrePersist
+    @PreUpdate
     public void prePersist() {
         this.addedAt = LocalDateTime.now();
+        recalculateSubtotal();
     }
 
-    @Transient
     public BigDecimal getSubtotal() {
+        return subtotal == null ? BigDecimal.ZERO : subtotal;
+    }
+
+    public void recalculateSubtotal() {
         if (unitPrice == null || quantity == null) {
-            return BigDecimal.ZERO;
+            this.subtotal = BigDecimal.ZERO;
+            return;
         }
-        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+        this.subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 }

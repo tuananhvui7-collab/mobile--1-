@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
+
 import com.ecommerce.mobile.entity.Product;
 import com.ecommerce.mobile.entity.ProductImage;
 import com.ecommerce.mobile.entity.ProductVariant;
@@ -27,11 +29,14 @@ public final class ProductDisplayHelper {
     }
 
     private static String findPrimaryOrFirstImageUrl(Product product) {
-        if (product == null || product.getVariants() == null) {
+        if (product == null || !Hibernate.isPropertyInitialized(product, "variants")) {
+            return null;
+        }
+        if (product.getVariants() == null) {
             return null;
         }
         for (ProductVariant v : product.getVariants()) {
-            if (v.getImages() == null) {
+            if (v == null || !Hibernate.isPropertyInitialized(v, "images") || v.getImages() == null) {
                 continue;
             }
             for (ProductImage img : v.getImages()) {
@@ -77,9 +82,9 @@ public final class ProductDisplayHelper {
      */
     public static List<String> collectImageUrls(Product product) {
         Set<String> ordered = new LinkedHashSet<>();
-        if (product != null && product.getVariants() != null) {
+        if (product != null && Hibernate.isPropertyInitialized(product, "variants") && product.getVariants() != null) {
             for (ProductVariant v : product.getVariants()) {
-                if (v.getImages() == null) {
+                if (v == null || !Hibernate.isPropertyInitialized(v, "images") || v.getImages() == null) {
                     continue;
                 }
                 for (ProductImage img : v.getImages()) {

@@ -63,6 +63,7 @@ public class CartService {
         item.setQuantity(newQuantity);
         item.setUnitPrice(variant.getPrice());
         item.setProductName(buildProductName(variant));
+        item.recalculateSubtotal();
         cartItemRepository.save(item);
         return getCartByCustomerEmail(customerEmail);
     }
@@ -92,6 +93,7 @@ public class CartService {
         item.setQuantity(newQuantity);
         item.setUnitPrice(variant.getPrice());
         item.setProductName(buildProductName(variant));
+        item.recalculateSubtotal();
         cartItemRepository.save(item);
         return getCartByCustomerEmail(customerEmail);
     }
@@ -147,6 +149,7 @@ public class CartService {
         item.setQuantity(0);
         item.setUnitPrice(variant.getPrice());
         item.setProductName(buildProductName(variant));
+        item.recalculateSubtotal();
         return item;
     }
 

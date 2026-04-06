@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-MobileApplication<mobile>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.ecommerce.mobile.MobileApplication",
+            "projectName": "mobile",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

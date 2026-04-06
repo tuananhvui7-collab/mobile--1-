@@ -1,0 +1,95 @@
+// Power BI measures for phoneshop_dw
+// Paste these as measures in Power BI Desktop after loading:
+// Dim_Date, Dim_Product, Dim_Customer, Fact_Sales, Fact_Reviews, Fact_OPEX
+
+// Core sales measures
+
+
+Total Revenue = SUM('phoneshop_dw fact_sales'[revenue])
+
+Total COGS = SUM('phoneshop_dw fact_sales'[cogs])
+
+Total Discounts =
+SUMX(
+    VALUES('phoneshop_dw fact_sales'[order_id]),
+    CALCULATE(MAX('phoneshop_dw fact_sales'[discount_amount]))
+)
+
+Total Shipping Fee =
+SUMX(
+    VALUES('phoneshop_dw fact_sales'[order_id]),
+    CALCULATE(MAX('phoneshop_dw fact_sales'[shipping_fee]))
+)
+
+Net Revenue = [Total Revenue] - [Total Discounts]
+
+Gross Profit = [Net Revenue] - [Total COGS]
+
+Gross Margin % =
+DIVIDE([Gross Profit], [Net Revenue], 0)
+
+Total Orders = DISTINCTCOUNT('phoneshop_dw fact_sales'[order_id])
+
+Delivered Orders =
+CALCULATE(
+    DISTINCTCOUNT('phoneshop_dw fact_sales'[order_id]),
+    'phoneshop_dw fact_sales'[order_status] = "DELIVERED"
+)
+
+Cancelled Orders =
+CALCULATE(
+    DISTINCTCOUNT('phoneshop_dw fact_sales'[order_id]),
+    'phoneshop_dw fact_sales'[order_status] = "CANCELLED"
+)
+
+Refunded Orders =
+CALCULATE(
+    DISTINCTCOUNT('phoneshop_dw fact_sales'[order_id]),
+    'phoneshop_dw fact_sales'[order_status] = "REFUNDED"
+)
+
+Cancel/Refund Rate =
+DIVIDE([Cancelled Orders] + [Refunded Orders], [Total Orders], 0)
+
+Orders With Voucher =
+CALCULATE(
+    DISTINCTCOUNT('phoneshop_dw fact_sales'[order_id]),
+    'phoneshop_dw fact_sales'[is_voucher_applied] = TRUE()
+)
+
+Voucher Penetration =
+DIVIDE([Orders With Voucher], [Total Orders], 0)
+
+Total Units Sold = SUM('phoneshop_dw fact_sales'[quantity])
+
+AOV = DIVIDE([Net Revenue], [Total Orders], 0)
+
+Average Lead Time (Days) =
+AVERAGEX(
+    VALUES('phoneshop_dw fact_sales'[order_id]),
+    CALCULATE(MAX('phoneshop_dw fact_sales'[lead_time_days]))
+)
+
+// CSAT / review measures
+Review Count = COUNTROWS('phoneshop_dw fact_reviews')
+
+Average Rating = AVERAGE('phoneshop_dw fact_reviews'[rating])
+
+// OPEX / profitability measures
+Total Salaries = SUM('phoneshop_dw fact_opex'[total_salaries])
+
+Total OPEX = SUM('phoneshop_dw fact_opex'[total_opex])
+
+Operating Profit = [Gross Profit] - [Total OPEX]
+
+Labor Cost Ratio = DIVIDE([Total Salaries], [Net Revenue], 0)
+
+// Inventory alerts
+Low Stock Variants =
+CALCULATE(
+    COUNTROWS('phoneshop_dw dim_product'),
+    'phoneshop_dw dim_product'[current_stock] < 10
+)
+
+Low Stock Alert =
+IF([Low Stock Variants] > 0, 1, 0)

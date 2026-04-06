@@ -1,0 +1,19 @@
+// Power BI calculated table for monthly OPEX visuals
+// Create this as a New Table in Power BI Desktop
+
+Dim_Month =
+VAR Base =
+    SUMMARIZE(
+        Dim_Date,
+        Dim_Date[month_key],
+        Dim_Date[year],
+        Dim_Date[month],
+        Dim_Date[month_name]
+    )
+RETURN
+    ADDCOLUMNS(
+        Base,
+        "month_label", FORMAT(DATE([year], [month], 1), "YYYY-MM"),
+        "month_sort", [month_key]
+    )
+
