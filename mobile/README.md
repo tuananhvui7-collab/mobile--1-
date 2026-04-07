@@ -64,7 +64,7 @@ This folder contains the Spring Boot e-commerce application.
 
 - login
 - manage products
-- manage users
+- manage employees
 - view reports
 - view orders
 - manage the business side of the app
@@ -97,6 +97,7 @@ This folder contains the Spring Boot e-commerce application.
 - `/employee/feedbacks`
 - `/admin/dashboard`
 - `/admin/products`
+- `/admin/employees`
 - `/admin/orders`
 - `/admin/reports`
 
@@ -135,6 +136,24 @@ The seeded accounts depend on the current mock data, but the common ones are:
 - `employee1@gmail.com / 123456`
 - `customer0001@phoneshop.vn / 123456`
 
+## What is polished in Sprint 2
+
+This branch now includes a shared responsive layout system:
+
+- common navbar, footer, flash messages, and head fragment
+- mobile-friendly cards, tables, and summary panels
+- consistent customer, employee, and manager styling
+- local VNPAY mock flow for localhost testing
+- manager employee management pages
+
+## What still feels rough and can be improved next
+
+- product detail can still look more like a modern e-commerce PDP
+- cart and checkout can use richer order summaries and inline guidance
+- order tracking can become a proper timeline view
+- manager pages can be turned into a more polished admin console
+- the public landing page can be simplified further if you want a more premium storefront feel
+
 ## Typical web test sequence
 
 1. Login as customer
@@ -149,6 +168,8 @@ The seeded accounts depend on the current mock data, but the common ones are:
 10. Track order
 11. Leave a review after delivery
 
+For local development, VNPAY mock mode is enabled so the payment flow can complete without a public callback URL.
+
 ## If something breaks
 
 When debugging, check these layers in order:
@@ -161,4 +182,3 @@ When debugging, check these layers in order:
 6. MySQL schema
 
 That order usually finds the problem fastest.
-

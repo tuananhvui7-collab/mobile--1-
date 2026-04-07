@@ -10,6 +10,8 @@ The warehouse database (`phoneshop_dw`) is good for reporting, dashboards, and K
 In this project, the business use case `U14: Xem báo cáo kinh doanh` maps directly to this BI stack.
 So the reporting feature in the web app and the warehouse dashboard are part of the same requirement.
 
+For the current sprint, the web app has been polished first so BI can rest on a more stable operational flow.
+
 ## Data flow
 
 ```text
@@ -216,5 +218,15 @@ If you are new to BI, remember this order:
 3. warehouse
 4. DAX
 5. visuals
+
+## Current sprint note
+
+The web app now has:
+- a shared responsive layout
+- a local VNPAY mock flow for dev testing
+- manager employee management
+- cleaner customer, staff, and manager screens
+
+That means BI can now be resumed later with less noise from unstable OLTP screens.
 
 That is the full path from raw data to dashboard.

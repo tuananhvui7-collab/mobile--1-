@@ -8,13 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.ecommerce.mobile.entity.Customer;
-import com.ecommerce.mobile.entity.Order;
-import com.ecommerce.mobile.entity.OrderItem;
 import com.ecommerce.mobile.entity.Product;
 import com.ecommerce.mobile.entity.Review;
 import com.ecommerce.mobile.enums.OrderStatus;
 import com.ecommerce.mobile.enums.ProductStatus;
-import com.ecommerce.mobile.repository.OrderRepository;
+import com.ecommerce.mobile.repository.OrderItemRepository;
 import com.ecommerce.mobile.repository.ProductRepository;
 import com.ecommerce.mobile.repository.ReviewRepository;
 
@@ -22,16 +20,16 @@ import com.ecommerce.mobile.repository.ReviewRepository;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final CustomerService customerService;
     private final ProductRepository productRepository;
 
     public ReviewService(ReviewRepository reviewRepository,
-                         OrderRepository orderRepository,
+                         OrderItemRepository orderItemRepository,
                          CustomerService customerService,
                          ProductRepository productRepository) {
         this.reviewRepository = reviewRepository;
-        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.customerService = customerService;
         this.productRepository = productRepository;
     }
@@ -61,20 +59,11 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public boolean canReviewProduct(String customerEmail, Long productId) {
         Customer customer = customerService.requireCustomerByEmail(customerEmail);
-        List<Order> orders = orderRepository.findByCustomerUserIDOrderByCreatedAtDesc(customer.getUserID());
-        for (Order order : orders) {
-            if (order == null || order.getStatus() == OrderStatus.CANCELLED || order.getItems() == null) {
-                continue;
-            }
-            for (OrderItem item : order.getItems()) {
-                if (item != null && item.getVariant() != null
-                        && item.getVariant().getProduct() != null
-                        && productId.equals(item.getVariant().getProduct().getProductId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return orderItemRepository
+                .existsByOrderCustomerUserIDAndVariantProductProductIdAndOrderStatusNot(
+                        customer.getUserID(),
+                        productId,
+                        OrderStatus.CANCELLED);
     }
 
     @Transactional

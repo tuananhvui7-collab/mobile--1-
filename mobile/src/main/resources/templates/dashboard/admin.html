@@ -1,39 +1,21 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard quản lý</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%); }
-        .hero-card {
-            background: linear-gradient(135deg, #7c2d12 0%, #ea580c 100%);
-            color: #fff;
-            border: none;
-            border-radius: 1.25rem;
-        }
-        .quick-card {
-            border: none;
-            border-radius: 1rem;
-            box-shadow: 0 10px 28px rgba(15, 23, 42, .08);
-            transition: transform .18s ease;
-        }
-        .quick-card:hover { transform: translateY(-4px); }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: head('Dashboard quản lý - PhoneShop')}"></head>
 <body>
-<div class="container py-4 py-lg-5">
-    <div class="hero-card p-4 p-md-5 mb-4">
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<main class="container ps-shell">
+    <div class="ps-hero p-4 p-md-5 mb-4">
         <div class="row align-items-center g-4">
             <div class="col-lg-8">
-                <span class="badge bg-light text-warning mb-3">Manager</span>
-                <h1 class="display-6 fw-bold mb-3">Bảng điều khiển quản lý</h1>
-                <p class="lead mb-0">Đây là nơi quản lý sản phẩm, đơn hàng và các luồng vận hành chính của hệ thống.</p>
+                <div class="ps-soft-badge mb-3">Manager</div>
+                <h1 class="ps-page-title text-white mb-3">Bảng điều khiển quản lý</h1>
+                <p class="lead mb-0 text-white-50">Đây là nơi quản lý sản phẩm, đơn hàng và các luồng vận hành chính của hệ thống.</p>
             </div>
             <div class="col-lg-4 text-lg-end">
                 <a th:href="@{/admin/orders}" class="btn btn-light btn-lg me-2">Đơn hàng</a>
                 <a th:href="@{/admin/products}" class="btn btn-outline-light btn-lg">Sản phẩm</a>
+                <a th:href="@{/admin/employees}" class="btn btn-outline-light btn-lg ms-2">Nhân viên</a>
                 <a th:href="@{/admin/reports}" class="btn btn-warning btn-lg ms-2">Báo cáo</a>
             </div>
         </div>
@@ -42,7 +24,7 @@
     <div class="row g-3 g-lg-4">
         <div class="col-md-6">
             <a th:href="@{/admin/orders}" class="text-decoration-none">
-                <div class="quick-card bg-white p-4 h-100">
+                <div class="ps-card ps-card-hover bg-white p-4 h-100">
                     <h5 class="mb-2 text-dark">Đơn hàng</h5>
                     <p class="text-muted mb-0">Xem danh sách và đổi trạng thái đơn.</p>
                 </div>
@@ -50,21 +32,32 @@
         </div>
         <div class="col-md-6">
             <a th:href="@{/admin/products}" class="text-decoration-none">
-                <div class="quick-card bg-white p-4 h-100">
+                <div class="ps-card ps-card-hover bg-white p-4 h-100">
                     <h5 class="mb-2 text-dark">Sản phẩm</h5>
                     <p class="text-muted mb-0">Tạo, sửa, ẩn và xem chi tiết sản phẩm.</p>
                 </div>
             </a>
         </div>
         <div class="col-md-6">
+            <a th:href="@{/admin/employees}" class="text-decoration-none">
+                <div class="ps-card ps-card-hover bg-white p-4 h-100">
+                    <h5 class="mb-2 text-dark">Nhân viên</h5>
+                    <p class="text-muted mb-0">Tạo, sửa, khóa và mở khóa tài khoản nhân viên.</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6">
             <a th:href="@{/admin/reports}" class="text-decoration-none">
-                <div class="quick-card bg-white p-4 h-100">
+                <div class="ps-card ps-card-hover bg-white p-4 h-100">
                     <h5 class="mb-2 text-dark">Báo cáo kinh doanh</h5>
                     <p class="text-muted mb-0">Xem doanh số, lợi nhuận và tồn kho.</p>
                 </div>
             </a>
         </div>
     </div>
-</div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
 </body>
 </html>

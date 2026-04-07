@@ -1,62 +1,62 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Quản lý đơn hàng</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+<head th:replace="~{fragments/layout :: head('Quản lý đơn hàng - PhoneShop')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<main class="container ps-shell">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-            <h3 class="mb-0">Đơn hàng</h3>
-            <div class="text-muted small">Quản lý và cập nhật trạng thái đơn</div>
+            <div class="ps-soft-badge mb-2">Employee</div>
+            <h1 class="ps-page-title mb-1">Đơn hàng</h1>
+            <div class="ps-page-subtitle">Quản lý và cập nhật trạng thái đơn</div>
         </div>
-        <a th:href="@{/}" class="btn btn-outline-secondary">Trang chủ</a>
+        <a th:href="@{/}" class="btn btn-outline-secondary ps-btn-pill">Trang chủ</a>
     </div>
 
-    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div th:replace="~{fragments/layout :: flash}"></div>
 
-    <div class="table-responsive bg-white shadow-sm rounded-3">
-        <table class="table table-bordered align-middle mb-0">
-            <thead class="table-light">
-            <tr>
-                <th>Mã đơn</th>
-                <th>Khách hàng</th>
-                <th>Ngày tạo</th>
-                <th>Trạng thái</th>
-                <th>Thanh toán</th>
-                <th>TT thanh toán</th>
-                <th>Tổng tiền</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:if="${orders == null or orders.isEmpty()}">
-                <td colspan="8" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
-            </tr>
-            <tr th:each="order : ${orders}">
-                <td th:text="${order.orderCode}">ORD-0000</td>
-                <td th:text="${order.customer != null ? order.customer.fullName : '—'}">—</td>
-                <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">—</td>
-                <td><span class="badge bg-secondary" th:text="${order.status}">PENDING</span></td>
-                <td th:text="${order.paymentMethod}">COD</td>
-                <td>
-                    <span class="badge"
-                          th:classappend="${order.latestPayment != null and order.latestPayment.status == T(com.ecommerce.mobile.enums.PaymentStatus).SUCCESS ? ' bg-success' :
-                                           (order.latestPayment != null and order.latestPayment.status == T(com.ecommerce.mobile.enums.PaymentStatus).REFUNDED ? ' bg-dark' :
-                                           (order.latestPayment != null and order.latestPayment.status == T(com.ecommerce.mobile.enums.PaymentStatus).FAILED ? ' bg-danger' : ' bg-warning text-dark'))}"
-                          th:text="${order.latestPayment != null ? order.latestPayment.status : '—'}">—</span>
-                </td>
-                <td th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')}">0</td>
-                <td class="text-end">
-                    <a th:href="${basePath + '/' + order.orderId}" class="btn btn-sm btn-primary">Chi tiết</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+    <div class="ps-card overflow-hidden">
+        <div class="table-responsive">
+            <table class="table ps-table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày tạo</th>
+                    <th>Trạng thái</th>
+                    <th>Thanh toán</th>
+                    <th>TT thanh toán</th>
+                    <th>Tổng tiền</th>
+                    <th class="text-end pe-4"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${orders == null or orders.isEmpty()}">
+                    <td colspan="8" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
+                </tr>
+                <tr th:each="order : ${orders}">
+                    <td class="ps-4">
+                        <div class="fw-semibold" th:text="${order.orderCode}">ORD-0000</div>
+                        <div class="ps-muted small">ID #<span th:text="${order.orderId}">0</span></div>
+                    </td>
+                    <td th:text="${order.customer != null ? order.customer.fullName : '—'}">—</td>
+                    <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">—</td>
+                    <td><span class="badge text-bg-secondary" th:text="${order.status}">PENDING</span></td>
+                    <td th:text="${order.paymentMethod}">COD</td>
+                    <td th:text="${order.latestPayment != null ? order.latestPayment.status : '—'}">—</td>
+                    <td class="fw-semibold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</td>
+                    <td class="text-end pe-4">
+                        <a th:href="${basePath + '/' + order.orderId}" class="btn btn-sm btn-primary">Chi tiết</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
 </body>
 </html>

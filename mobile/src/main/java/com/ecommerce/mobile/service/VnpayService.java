@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -48,10 +49,13 @@ public class VnpayService {
 
     @Transactional(readOnly = true)
     public String createPaymentUrl(Payment payment, HttpServletRequest request) {
-        validateConfig();
         if (payment == null || payment.getOrder() == null) {
             throw new RuntimeException("Không tìm thấy dữ liệu thanh toán");
         }
+        if (properties.isMockMode()) {
+            return "/payments/" + payment.getPaymentId() + "/vnpay/mock";
+        }
+        validateConfig();
 
         Order order = payment.getOrder();
         BigDecimal amount = order.getTotalAmount() == null ? BigDecimal.ZERO : order.getTotalAmount();
@@ -157,6 +161,54 @@ public class VnpayService {
             return CallbackResult.success("00", "Confirm Success", payment);
         }
         return CallbackResult.success("00", "Confirm Success", payment);
+    }
+
+    @Transactional
+    public Payment simulateLocalResult(Long paymentId, String customerEmail, boolean success) {
+        Payment payment = paymentRepository.findDetailedByPaymentId(paymentId)
+                .filter(p -> p.getOrder() != null
+                        && p.getOrder().getCustomer() != null
+                        && customerEmail.equals(p.getOrder().getCustomer().getEmail()))
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán"));
+
+        if (payment.getMethod() != com.ecommerce.mobile.enums.PaymentMethod.VN_PAY) {
+            throw new RuntimeException("Thanh toán này không dùng VNPAY");
+        }
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            return payment;
+        }
+
+        if (success) {
+            payment.setGatewayTransactionNo("MOCK-" + payment.getTransactionRef());
+            payment.setBankTransactionNo("MOCK-" + payment.getTransactionRef());
+            payment.setBankCode("MOCK");
+            payment.setCardType("QR");
+            payment.setResponseCode("00");
+            payment.setTransactionStatus("00");
+            payment.setPayDate(DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(ZonedDateTime.now(HCMC)));
+            payment.setResponseMessage("Thanh toán thành công (mô phỏng local)");
+            payment.setStatus(PaymentStatus.SUCCESS);
+            payment.setPaidAt(LocalDateTime.now());
+            if (payment.getOrder() != null && payment.getOrder().getStatus() == OrderStatus.PENDING) {
+                payment.getOrder().setStatus(OrderStatus.CONFIRMED);
+            }
+        } else {
+            payment.setGatewayTransactionNo("MOCK-" + payment.getTransactionRef());
+            payment.setBankTransactionNo(null);
+            payment.setBankCode("MOCK");
+            payment.setCardType("QR");
+            payment.setResponseCode("01");
+            payment.setTransactionStatus("01");
+            payment.setPayDate(DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(ZonedDateTime.now(HCMC)));
+            payment.setResponseMessage("Thanh toán thất bại (mô phỏng local)");
+            payment.setStatus(PaymentStatus.FAILED);
+        }
+
+        paymentRepository.save(payment);
+        if (payment.getOrder() != null) {
+            orderRepository.save(payment.getOrder());
+        }
+        return payment;
     }
 
     public Map<String, String> buildIpnResponse(CallbackResult callbackResult) {

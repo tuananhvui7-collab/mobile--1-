@@ -40,6 +40,9 @@ The Spring Boot app covers:
 - staff order processing
 - product management
 - business reports
+- responsive layout and shared Thymeleaf fragments
+- manager employee management
+- local VNPAY mock flow for localhost testing
 
 ## What is in the BI stack
 
@@ -88,8 +91,14 @@ The current system is usable for:
 - DWH loading
 - BI dashboard building
 
+Sprint 2 is now focused on the web app polish pass:
+- cleaner layout and responsive screens
+- more realistic customer, staff, and manager flows
+- local payment and shipment test paths
+- manager-side employee management
+
 If you want to continue later, the next natural steps are:
-- improve the UI templates
-- harden the shipment tracking flow
-- add more dashboard pages
-- refine the DWH measures
+- improve product detail and cart UX further
+- add richer order timeline visuals
+- make the manager pages feel more like a production admin panel
+- refine BI measures and dashboard pages when you resume the analytics sprint

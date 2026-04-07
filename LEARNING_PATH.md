@@ -164,6 +164,19 @@ Sprint 2 can be about:
 - code refactoring
 - architecture cleanup
 
+In the current state of the project, Sprint 2 has already been used to polish the web app:
+- shared responsive fragments
+- customer flow cleanup
+- staff flow cleanup
+- manager employee management
+- local payment/shipping test paths
+
+The next step after that is to keep improving the screens that still feel old:
+- product detail
+- cart and checkout
+- order tracking
+- manager admin console
+
 That is normal.
 Sprint 1 was about getting the system working.
 Sprint 2 is about making it easier to use, easier to test, and easier to explain.

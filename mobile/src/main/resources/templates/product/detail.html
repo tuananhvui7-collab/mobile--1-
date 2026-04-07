@@ -1,291 +1,157 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${product.name} + ' — PhoneShop'">Chi tiết — PhoneShop</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
-        }
-        .detail-topbar {
-            background: rgba(255,255,255,.92);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(15, 23, 42, .06);
-        }
-        .breadcrumb { margin-bottom: 0; --bs-breadcrumb-divider: '›'; }
-        .gallery-card {
-            border-radius: 1.25rem;
-            overflow: hidden;
-            background: #fff;
-            box-shadow: 0 8px 32px rgba(15, 23, 42, .08);
-        }
-        .carousel-item { background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); }
-        .carousel-item img {
-            max-height: 420px;
-            width: 100%;
-            object-fit: contain;
-            padding: 1.5rem;
-        }
-        .carousel-control-prev-icon, .carousel-control-next-icon {
-            filter: invert(0.35);
-        }
-        .info-card {
-            border-radius: 1.25rem;
-            background: #fff;
-            box-shadow: 0 8px 32px rgba(15, 23, 42, .08);
-        }
-        .brand-chip {
-            font-size: .75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: #2563eb;
-            background: rgba(37, 99, 235, .1);
-            padding: .25rem .65rem;
-            border-radius: 999px;
-        }
-        .price-hero {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .variant-table thead th {
-            font-size: .72rem;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-            color: #64748b;
-            font-weight: 600;
-            border-bottom-width: 1px;
-        }
-        .stock-ok { color: #059669; font-weight: 600; }
-        .stock-low { color: #d97706; font-weight: 600; }
-        .stock-out { color: #dc2626; font-weight: 600; }
-    </style>
-</head>
-<body th:with="H=${T(com.ecommerce.mobile.util.ProductDisplayHelper)},
-               imgs=${H.collectImageUrls(product)},
-               min=${H.minPrice(product)}">
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${product.name} + ' - PhoneShop')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
 
-<header class="detail-topbar sticky-top">
-    <div class="container py-3">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <a th:href="@{/products}" class="text-decoration-none text-dark fw-bold">PhoneShop</a>
-            <div class="d-flex align-items-center gap-2">
-                <a th:href="@{/products}" class="btn btn-sm btn-outline-secondary rounded-pill">Cửa hàng</a>
-                <a th:if="${#authorization.expression('!isAuthenticated()')}"
-                   th:href="@{/login}" class="btn btn-sm btn-outline-primary rounded-pill">Đăng nhập</a>
-                <a sec:authorize="hasRole('CUSTOMER')"
-                   th:href="@{/profile}" class="btn btn-sm btn-outline-secondary rounded-pill">Hồ sơ</a>
-                <form th:if="${#authorization.expression('isAuthenticated()')}"
-                      th:action="@{/logout}" method="post" class="d-inline">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit" class="btn btn-sm btn-danger rounded-pill">Đăng xuất</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</header>
-
-<main class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
+<main class="container ps-shell">
+    <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a th:href="@{/products}">Sản phẩm</a></li>
-            <li class="breadcrumb-item active text-truncate" style="max-width: 12rem;" th:text="${product.name}">Tên</li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Chi tiết</li>
         </ol>
     </nav>
 
-    <div class="row g-4 align-items-start">
-        <div class="col-lg-7">
-            <div class="gallery-card">
-                <div th:if="${imgs.isEmpty()}" class="ratio ratio-4x3 bg-light d-flex align-items-center justify-content-center">
-                        <th:block th:with="fb=${H.cardImageUrl(product)}">
-                            <img th:if="${H.isAbsoluteUrl(fb)}" th:src="${fb}" class="w-100 h-100 object-fit-contain p-4" th:alt="${product.name}">
-                        <img th:unless="${H.isAbsoluteUrl(fb)}" th:src="${fb}" class="w-100 h-100 object-fit-contain p-4" th:alt="${product.name}">
-                        </th:block>
+    <section class="ps-hero p-4 p-lg-5 mb-4">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-7">
+                <div class="ps-soft-badge mb-3" th:text="${product.brand != null ? product.brand : 'PhoneShop'}">Brand</div>
+                <h1 class="ps-page-title text-white mb-2" th:text="${product.name}">Tên sản phẩm</h1>
+                <div class="text-white-50 mb-3">
+                    Danh mục:
+                    <span th:text="${product.category != null ? product.category.name : 'Chưa phân loại'}">Category</span>
                 </div>
-                <div id="productCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel"
-                     th:unless="${imgs.isEmpty()}">
-                    <div class="carousel-inner">
-                        <div th:each="u, it : ${imgs}"
-                             th:class="${it.first} ? 'carousel-item active' : 'carousel-item'">
-                            <img th:if="${H.isAbsoluteUrl(u)}" th:src="${u}" th:alt="${product.name}">
-                            <img th:unless="${H.isAbsoluteUrl(u)}" th:src="${u}" th:alt="${product.name}">
+                <p class="lead mb-0" th:text="${product.description != null ? product.description : 'Chưa có mô tả cho sản phẩm này.'}">Mô tả sản phẩm</p>
+            </div>
+            <div class="col-lg-5">
+                <div class="ps-card p-4 bg-white h-100">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="rounded-4 bg-light p-3 h-100">
+                                <div class="small text-uppercase text-muted fw-semibold">Sản phẩm</div>
+                                <div class="fw-bold" th:text="${product.productId}">1</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="rounded-4 bg-light p-3 h-100">
+                                <div class="small text-uppercase text-muted fw-semibold">Ngày tạo</div>
+                                <div class="fw-bold" th:text="${product.createdAt != null ? #temporals.format(product.createdAt, 'dd/MM/yyyy') : '—'}">—</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="rounded-4 bg-light p-3 h-100">
+                                <div class="small text-uppercase text-muted fw-semibold">Đánh giá</div>
+                                <div class="fw-bold" th:text="${reviewCount != null ? reviewCount : 0}">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="rounded-4 bg-light p-3 h-100">
+                                <div class="small text-uppercase text-muted fw-semibold">Điểm</div>
+                                <div class="fw-bold" th:text="${averageRating != null ? averageRating + '/5' : 'Chưa có'}">—</div>
+                            </div>
                         </div>
                     </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev" th:if="${imgs.size() > 1}">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Trước</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next" th:if="${imgs.size() > 1}">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Sau</span>
-                    </button>
                 </div>
             </div>
-            <p class="text-muted small mt-3 mb-0" th:if="${!imgs.isEmpty()}">
-                Vuốt hoặc dùng mũi tên để xem thêm ảnh.
-            </p>
+        </div>
+    </section>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <div class="ps-card mb-4">
+        <div class="p-4 border-bottom">
+            <h2 class="h5 fw-bold mb-0">Phiên bản &amp; giá</h2>
         </div>
 
-        <div class="col-lg-5">
-            <div class="info-card p-4 p-lg-5">
-                <span class="brand-chip" th:text="${product.brand != null ? product.brand : 'Thương hiệu'}">Hãng</span>
-                <h1 class="h3 fw-bold mt-2 mb-3" th:text="${product.name}">Tên sản phẩm</h1>
-
-                <div class="mb-4">
-                    <div class="price-hero" th:if="${min != null}">
-                        <span class="text-muted fs-6 fw-normal me-2">Từ</span>
-                        <span th:text="${H.formatVnd(min)}">0 ₫</span>
-                    </div>
-                    <div class="text-muted" th:if="${min == null}">Giá sẽ hiển thị theo từng phiên bản bên dưới.</div>
-                </div>
-
-                <div class="mb-4">
-                    <h2 class="h6 text-uppercase text-muted fw-semibold letter-spacing mb-2">Mô tả</h2>
-                    <p class="mb-0 lh-lg" th:if="${product.description != null and !product.description.isBlank()}"
-                       th:text="${product.description}">Mô tả</p>
-                    <p class="text-muted mb-0" th:if="${product.description == null or product.description.isBlank()}">
-                        Chưa có mô tả chi tiết cho sản phẩm này.
-                    </p>
-                </div>
-
-                <dl class="row small mb-0 border-top pt-3">
-                    <dt class="col-5 text-muted">Danh mục</dt>
-                    <dd class="col-7 mb-2" th:text="${product.category != null ? product.category.name : '—'}">—</dd>
-                    <dt class="col-5 text-muted">Mã SP</dt>
-                    <dd class="col-7 mb-2" th:text="${product.productId}">1</dd>
-                    <dt class="col-5 text-muted">Cập nhật</dt>
-                    <dd class="col-7 mb-0" th:text="${product.createdAt != null ? #temporals.format(product.createdAt, 'dd/MM/yyyy') : '—'}">—</dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-
-    <section class="mt-5" th:if="${product.variants != null and !product.variants.isEmpty()}">
-        <h2 class="h5 fw-bold mb-3">Phiên bản &amp; giá</h2>
-        <div class="table-responsive rounded-3 shadow-sm bg-white">
-            <table class="table table-hover align-middle variant-table mb-0">
+        <div class="table-responsive">
+            <table class="table ps-table mb-0 align-middle">
                 <thead class="table-light">
                 <tr>
-                    <th>Bộ nhớ</th>
+                    <th class="ps-4">Bộ nhớ</th>
                     <th>Giá</th>
                     <th>Tồn kho</th>
-                    <th class="d-none d-md-table-cell">SKU</th>
-                    <th class="text-end">Giỏ hàng</th>
+                    <th>Mã SKU</th>
+                    <th class="text-end pe-4">Thêm vào giỏ</th>
                 </tr>
                 </thead>
                 <tbody>
+                <tr th:if="${product.variants == null or product.variants.isEmpty()}">
+                    <td colspan="5" class="ps-4 py-4 ps-muted">Sản phẩm này chưa có phiên bản.</td>
+                </tr>
                 <tr th:each="v : ${product.variants}">
+                    <td class="ps-4" th:text="${v.storage_gb != null ? v.storage_gb + ' GB' : '—'}">128 GB</td>
+                    <td th:text="${v.price != null ? #numbers.formatDecimal(v.price, 0, 'COMMA', 0, 'POINT') + ' đ' : '—'}">0</td>
                     <td>
-                        <span class="fw-semibold" th:text="${v.storage_gb != null ? (v.storage_gb + ' GB') : '—'}">128 GB</span>
+                        <span class="badge" th:classappend="${v.stockQty != null and v.stockQty > 10} ? ' text-bg-success' : (${v.stockQty != null and v.stockQty > 0} ? ' text-bg-warning' : ' text-bg-danger')" th:text="${v.stockQty != null ? v.stockQty : 0}">0</span>
                     </td>
-                    <td class="fw-semibold" th:text="${v.price != null ? H.formatVnd(v.price) : '—'}">—</td>
-                    <td>
-                        <span th:if="${v.stockQty != null and v.stockQty > 5}" class="stock-ok" th:text="${v.stockQty + ' sẵn'}">10 sẵn</span>
-                        <span th:if="${v.stockQty != null and v.stockQty > 0 and v.stockQty <= 5}" class="stock-low" th:text="${'Còn ' + v.stockQty}">Còn 2</span>
-                        <span th:if="${v.stockQty == null or v.stockQty == 0}" class="stock-out">Hết hàng</span>
-                    </td>
-                    <td class="text-muted small d-none d-md-table-cell" th:text="${v.sku != null ? v.sku : '—'}">SKU</td>
-                    <td class="text-end">
-                        <form th:action="@{/cart/add/{variantId}(variantId=${v.variant_id})}" method="post" class="d-inline-flex gap-2 align-items-center">
+                    <td th:text="${v.sku != null ? v.sku : '—'}">SKU</td>
+                    <td class="text-end pe-4">
+                        <form th:action="@{/cart/add/{variantId}(variantId=${v.variant_id})}" method="post" class="d-inline-flex flex-wrap gap-2 align-items-center justify-content-end">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            <input type="number" name="quantity" min="1" value="1" class="form-control form-control-sm" style="width: 86px;">
-                            <button type="submit" class="btn btn-sm btn-primary">Thêm</button>
+                            <input type="number" name="quantity" min="1" value="1" class="form-control form-control-sm" style="width: 90px;">
+                            <button type="submit" class="btn btn-sm btn-primary">Thêm giỏ</button>
                         </form>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
-    </section>
+    </div>
 
-    <section class="mt-5">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <div>
-                <h2 class="h5 fw-bold mb-1">Đánh giá sản phẩm</h2>
-                <div class="text-muted small">
-                    <span th:text="${reviewCount != null ? reviewCount : 0}">0</span> đánh giá,
-                    điểm trung bình:
-                    <span th:text="${averageRating != null ? T(com.ecommerce.mobile.service.ReviewService).formatAverageRating(averageRating) : 'Chưa có đánh giá'}">Chưa có đánh giá</span>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="ps-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h5 fw-bold mb-0">Đánh giá sản phẩm</h3>
+                    <div class="ps-soft-badge" th:text="${reviewCount != null ? reviewCount + ' đánh giá' : '0 đánh giá'}">0 đánh giá</div>
                 </div>
-            </div>
-        </div>
-
-        <div th:if="${#authorization.expression('!isAuthenticated()')}" class="alert alert-info">
-            Đăng nhập tài khoản khách để viết đánh giá sản phẩm.
-        </div>
-
-        <div th:if="${#authorization.expression('isAuthenticated()') and !canReview}" class="alert alert-warning">
-            Bạn cần mua sản phẩm này trước khi có thể đánh giá.
-        </div>
-
-        <div class="card shadow-sm mb-4" th:if="${#authorization.expression('isAuthenticated()') and canReview}">
-            <div class="card-body">
-                <h3 class="h6 fw-bold mb-3" th:text="${myReview != null ? 'Cập nhật đánh giá của bạn' : 'Viết đánh giá của bạn'}">Viết đánh giá</h3>
-                <form th:action="@{/products/{id}/reviews(id=${product.productId})}" method="post" class="row g-3">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <div class="col-md-4">
-                        <label class="form-label">Số sao</label>
-                        <select class="form-select" name="rating" required>
-                            <option value="">-- Chọn --</option>
-                            <option value="5" th:selected="${myReview != null and myReview.rating == 5}">5 sao</option>
-                            <option value="4" th:selected="${myReview != null and myReview.rating == 4}">4 sao</option>
-                            <option value="3" th:selected="${myReview != null and myReview.rating == 3}">3 sao</option>
-                            <option value="2" th:selected="${myReview != null and myReview.rating == 2}">2 sao</option>
-                            <option value="1" th:selected="${myReview != null and myReview.rating == 1}">1 sao</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Nhận xét</label>
-                        <textarea class="form-control" name="comment" rows="4" placeholder="Chia sẻ cảm nhận của bạn..." th:text="${myReview != null ? myReview.comment : ''}"></textarea>
-                    </div>
-                    <div class="col-12 d-flex gap-2 flex-wrap">
-                        <button type="submit" class="btn btn-primary">Lưu đánh giá</button>
-                    </div>
-                </form>
-
-                <form th:if="${myReview != null}"
-                      th:action="@{/products/{pid}/reviews/{rid}/delete(pid=${product.productId}, rid=${myReview.reviewId})}"
-                      method="post" class="mt-3">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit" class="btn btn-outline-danger">Xóa đánh giá của tôi</button>
-                </form>
-            </div>
-        </div>
-
-        <div th:if="${reviews == null or reviews.isEmpty()}" class="alert alert-light border">
-            Chưa có đánh giá nào cho sản phẩm này.
-        </div>
-
-        <div th:if="${reviews != null and !reviews.isEmpty()}" class="vstack gap-3">
-            <div class="card shadow-sm" th:each="review : ${reviews}">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between gap-2 flex-wrap mb-2">
-                        <div>
-                            <div class="fw-semibold" th:text="${review.customer != null ? review.customer.fullName : 'Khách hàng'}">Khách hàng</div>
-                            <div class="text-muted small" th:text="${review.createdAt != null ? #temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">—</div>
+                <div th:if="${reviews == null or reviews.isEmpty()}" class="alert alert-light border mb-0">
+                    Chưa có đánh giá nào.
+                </div>
+                <div th:if="${reviews != null and !reviews.isEmpty()}" class="vstack gap-3">
+                    <div class="rounded-4 border p-3" th:each="review : ${reviews}">
+                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
+                        <div class="fw-semibold" th:text="${review.customer != null ? review.customer.fullName : 'Khách hàng'}">Khách hàng</div>
+                            <span class="badge text-bg-primary" th:text="${review.rating + '/5'}">5/5</span>
                         </div>
-                        <div class="text-warning fw-semibold" th:text="${review.rating + ' / 5'}">5 / 5</div>
+                        <div class="ps-muted" th:text="${review.comment}">Nội dung</div>
                     </div>
-                    <p class="mb-0" th:text="${review.comment != null and !review.comment.isBlank() ? review.comment : 'Không có nhận xét'}">Nhận xét</p>
                 </div>
             </div>
         </div>
-    </section>
 
-    <p class="text-muted small mt-4 mb-0" sec:authorize="!hasRole('CUSTOMER')">
-        Đăng nhập tài khoản khách để (sau này) thêm vào giỏ hàng khi tính năng sẵn sàng.
-    </p>
+        <div class="col-lg-5">
+            <div class="ps-card p-4 h-100">
+                <h3 class="h5 fw-bold mb-3">Bình luận của bạn</h3>
+                <div th:if="${canReview}">
+                    <form th:action="@{/products/{id}/reviews(id=${product.productId})}" method="post" class="vstack gap-3">
+                        <div>
+                            <label class="form-label fw-semibold">Đánh giá</label>
+                            <select name="rating" class="form-select">
+                                <option value="5">5 - Rất hài lòng</option>
+                                <option value="4">4 - Hài lòng</option>
+                                <option value="3">3 - Ổn</option>
+                                <option value="2">2 - Chưa hài lòng</option>
+                                <option value="1">1 - Rất tệ</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold">Nhận xét</label>
+                            <textarea name="comment" rows="5" class="form-control" placeholder="Viết nhận xét của bạn..."></textarea>
+                        </div>
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-primary ps-btn-pill">Gửi đánh giá</button>
+                    </form>
+                </div>
+                <div th:if="${!canReview}" class="alert alert-light border mb-0">
+                    Bạn cần hoàn tất đơn hàng trước khi đánh giá sản phẩm.
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments/layout :: footer}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
 </body>
 </html>

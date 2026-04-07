@@ -17,6 +17,7 @@ public class VnpayProperties {
     private String orderType = "other";
     private String version = "2.1.0";
     private int expireMinutes = 15;
+    private boolean mockMode = true;
 
     public String getPaymentUrl() {
         return paymentUrl;
@@ -96,5 +97,13 @@ public class VnpayProperties {
 
     public void setExpireMinutes(int expireMinutes) {
         this.expireMinutes = expireMinutes;
+    }
+
+    public boolean isMockMode() {
+        return mockMode;
+    }
+
+    public void setMockMode(boolean mockMode) {
+        this.mockMode = mockMode;
     }
 }

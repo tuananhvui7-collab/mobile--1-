@@ -64,6 +64,25 @@ public class PaymentController {
         return "redirect:" + paymentUrl;
     }
 
+    @GetMapping("/payments/{paymentId}/vnpay/mock")
+    public String mockGateway(@AuthenticationPrincipal UserDetails principal,
+                              @PathVariable Long paymentId,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        Payment payment = paymentService.getPaymentForCustomer(paymentId, principal.getUsername());
+        if (payment == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy thanh toán");
+            return "redirect:/orders";
+        }
+        if (payment.getMethod() != com.ecommerce.mobile.enums.PaymentMethod.VN_PAY) {
+            redirectAttributes.addFlashAttribute("error", "Thanh toán này không dùng VNPAY");
+            return "redirect:/payments/" + paymentId;
+        }
+        model.addAttribute("payment", payment);
+        model.addAttribute("order", payment.getOrder());
+        return "payment/mock";
+    }
+
     @GetMapping("/payments/vnpay/return")
     public String vnpayReturn(HttpServletRequest request, Model model) {
         VnpayService.CallbackResult result = vnpayService.processCallback(request, true);
@@ -85,6 +104,34 @@ public class PaymentController {
     public java.util.Map<String, String> vnpayIpn(HttpServletRequest request) {
         VnpayService.CallbackResult result = vnpayService.processCallback(request, true);
         return vnpayService.buildIpnResponse(result);
+    }
+
+    @PostMapping("/payments/{paymentId}/vnpay/mock/confirm")
+    public String mockConfirm(@AuthenticationPrincipal UserDetails principal,
+                              @PathVariable Long paymentId,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            Payment payment = vnpayService.simulateLocalResult(paymentId, principal.getUsername(), true);
+            redirectAttributes.addFlashAttribute("success", "Đã mô phỏng thanh toán VNPAY thành công");
+            return "redirect:/orders/" + payment.getOrder().getOrderId();
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/payments/" + paymentId + "/vnpay/mock";
+        }
+    }
+
+    @PostMapping("/payments/{paymentId}/vnpay/mock/fail")
+    public String mockFail(@AuthenticationPrincipal UserDetails principal,
+                           @PathVariable Long paymentId,
+                           RedirectAttributes redirectAttributes) {
+        try {
+            vnpayService.simulateLocalResult(paymentId, principal.getUsername(), false);
+            redirectAttributes.addFlashAttribute("error", "Đã mô phỏng thanh toán VNPAY thất bại");
+            return "redirect:/payments/" + paymentId;
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/payments/" + paymentId + "/vnpay/mock";
+        }
     }
 
     @PostMapping("/payments/{paymentId}/confirm")
