@@ -17,6 +17,13 @@
     <div th:replace="~{fragments/layout :: flash}"></div>
 
     <div class="ps-card overflow-hidden">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2 class="h6 fw-bold mb-1 mb-0">Danh sách nhân viên</h2>
+                <div class="ps-muted small">Xem trạng thái tài khoản, lương và thao tác nhanh.</div>
+            </div>
+            <span class="ps-soft-badge" th:text="${employees != null ? employees.size() + ' nhân viên' : '0 nhân viên'}">0 nhân viên</span>
+        </div>
         <div class="table-responsive">
             <table class="table ps-table table-hover align-middle mb-0">
                 <thead class="table-light">

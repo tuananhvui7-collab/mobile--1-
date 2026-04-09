@@ -52,7 +52,7 @@ public String productDetail(@PathVariable Long id,
                             @AuthenticationPrincipal UserDetails principal,
                             Model model) {
 
-    Product product = productService.getActiveProductById(id);
+    Product product = productService.getActiveProductDetailById(id);
 
     if (product == null) {
         return "redirect:/products?error=not-found";

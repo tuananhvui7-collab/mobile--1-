@@ -9,7 +9,7 @@
         <div>
             <div class="ps-soft-badge mb-2">Manager</div>
             <h1 class="ps-page-title mb-1">Báo cáo kinh doanh</h1>
-            <div class="ps-page-subtitle">Tổng quan doanh số, lợi nhuận và tồn kho hiện tại</div>
+            <div class="ps-page-subtitle">Tổng quan doanh số, lợi nhuận, tồn kho và dashboard BI nhúng</div>
         </div>
         <div class="d-flex gap-2">
             <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary">Dashboard</a>
@@ -17,87 +17,123 @@
         </div>
     </div>
 
-    <div class="row g-3 g-lg-4 mb-4">
-        <div class="col-md-4 col-xl-2">
-            <div class="ps-card metric p-3 h-100">
-                <div class="small opacity-75">Đơn hàng</div>
-                <div class="display-6 fw-bold mb-0" th:text="${summary.totalOrders}">0</div>
+    <div class="ps-card p-3 p-lg-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+                <h5 class="mb-1">BI Dashboard</h5>
+                <div class="text-muted small">
+                    Sprint 4 dùng iframe để nhúng dashboard Metabase vào ngay trong web app.
+                </div>
             </div>
+            <span class="ps-soft-badge" th:if="${biDashboardReady}">Embedded</span>
+            <span class="ps-soft-badge bg-warning-subtle text-warning-emphasis" th:unless="${biDashboardReady}">Chưa cấu hình</span>
         </div>
-        <div class="col-md-4 col-xl-2">
-            <div class="ps-card metric alt p-3 h-100">
-                <div class="small opacity-75">Đơn đã giao</div>
-                <div class="display-6 fw-bold mb-0" th:text="${summary.deliveredOrders}">0</div>
-            </div>
+
+        <div th:if="${biDashboardReady}" class="ps-iframe-shell">
+            <iframe
+                    th:src="${biDashboardUrl}"
+                    title="PhoneShop BI Dashboard"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                    allow="fullscreen"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads">
+            </iframe>
         </div>
-        <div class="col-md-4 col-xl-2">
-            <div class="ps-card metric green p-3 h-100">
-                <div class="small opacity-75">Doanh số</div>
-                <div class="h4 fw-bold mb-0" th:text="${#numbers.formatDecimal(summary.grossRevenue, 0, 'COMMA', 0, 'POINT')}">0</div>
-            </div>
-        </div>
-        <div class="col-md-4 col-xl-2">
-            <div class="ps-card p-3 h-100">
-                <div class="text-muted small">Doanh thu thực nhận</div>
-                <div class="h4 fw-bold mb-0 text-primary" th:text="${#numbers.formatDecimal(summary.realizedRevenue, 0, 'COMMA', 0, 'POINT')}">0</div>
-            </div>
-        </div>
-        <div class="col-md-4 col-xl-2">
-            <div class="ps-card p-3 h-100">
-                <div class="text-muted small">Lợi nhuận ước tính</div>
-                <div class="h4 fw-bold mb-0 text-success" th:text="${#numbers.formatDecimal(summary.estimatedProfit, 0, 'COMMA', 0, 'POINT')}">0</div>
-            </div>
-        </div>
-        <div class="col-md-4 col-xl-2">
-            <div class="ps-card p-3 h-100">
-                <div class="text-muted small">Giá trị tồn kho</div>
-                <div class="h4 fw-bold mb-0 text-dark" th:text="${#numbers.formatDecimal(summary.inventoryValue, 0, 'COMMA', 0, 'POINT')}">0</div>
-            </div>
+
+        <div th:unless="${biDashboardReady}" class="alert alert-info ps-alert mb-0">
+            Chưa có URL dashboard BI. Hãy cấu hình <code>bi.dashboard-url</code> trong
+            <code>application.properties</code> để trang này hiển thị dashboard trong <code>&lt;iframe&gt;</code>.
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-lg-8">
-            <div class="ps-card p-3 p-lg-4 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="mb-1">Doanh số 6 tháng gần nhất</h5>
-                        <div class="text-muted small">Tổng doanh số và doanh thu đã giao theo tháng</div>
-                    </div>
-                </div>
-                <canvas id="revenueChart" height="110"></canvas>
+    <div class="row g-2 g-lg-3 mb-4">
+        <div class="col-md-4 col-xl-2">
+            <div class="ps-card metric p-2 h-100">
+                <div class="small opacity-75">Đơn hàng</div>
+                <div class="h3 fw-bold mb-0" th:text="${summary.totalOrders}">0</div>
             </div>
         </div>
-        <div class="col-lg-4">
-            <div class="ps-card p-3 p-lg-4 h-100">
-                <h5 class="mb-3">Tổng quan tồn kho</h5>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Sản phẩm active</span>
-                    <strong th:text="${summary.activeProducts}">0</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Biến thể</span>
-                    <strong th:text="${summary.totalVariants}">0</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Tồn kho thấp</span>
-                    <strong class="text-danger" th:text="${summary.lowStockVariants}">0</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Tổng số lượng</span>
-                    <strong th:text="${summary.totalStockQty}">0</strong>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="text-muted">Đơn đã huỷ</span>
-                    <strong th:text="${summary.cancelledOrders}">0</strong>
-                </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="ps-card metric alt p-2 h-100">
+                <div class="small opacity-75">Đơn đã giao</div>
+                <div class="h3 fw-bold mb-0" th:text="${summary.deliveredOrders}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="ps-card metric green p-2 h-100">
+                <div class="small opacity-75">Doanh số</div>
+                <div class="h5 fw-bold mb-0" th:text="${#numbers.formatDecimal(summary.grossRevenue, 0, 'COMMA', 0, 'POINT')}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="ps-card p-2 h-100">
+                <div class="text-muted small">Doanh thu thực nhận</div>
+                <div class="h5 fw-bold mb-0 text-primary" th:text="${#numbers.formatDecimal(summary.realizedRevenue, 0, 'COMMA', 0, 'POINT')}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="ps-card p-2 h-100">
+                <div class="text-muted small">Lợi nhuận ước tính</div>
+                <div class="h5 fw-bold mb-0 text-success" th:text="${#numbers.formatDecimal(summary.estimatedProfit, 0, 'COMMA', 0, 'POINT')}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-xl-2">
+            <div class="ps-card p-2 h-100">
+                <div class="text-muted small">Giá trị tồn kho</div>
+                <div class="h5 fw-bold mb-0 text-dark" th:text="${#numbers.formatDecimal(summary.inventoryValue, 0, 'COMMA', 0, 'POINT')}">0</div>
             </div>
         </div>
     </div>
 
     <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="ps-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-1">Doanh số 6 tháng gần nhất</h5>
+                        <div class="text-muted small">Tổng doanh số và doanh thu đã giao theo tháng</div>
+                    </div>
+                    <span class="ps-soft-badge">Internal snapshot</span>
+                </div>
+                <canvas id="revenueChart" height="92"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="ps-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Tổng quan tồn kho</h5>
+                    <span class="ps-soft-badge">Inventory</span>
+                </div>
+                <div class="ps-summary-list">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Sản phẩm active</span>
+                        <strong th:text="${summary.activeProducts}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Biến thể</span>
+                        <strong th:text="${summary.totalVariants}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Tồn kho thấp</span>
+                        <strong class="text-danger" th:text="${summary.lowStockVariants}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Tổng số lượng</span>
+                        <strong th:text="${summary.totalStockQty}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Đơn đã huỷ</span>
+                        <strong th:text="${summary.cancelledOrders}">0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-0">
         <div class="col-lg-7">
-            <div class="ps-card p-3 p-lg-4 h-100">
+            <div class="ps-card p-3 h-100">
                 <h5 class="mb-3">Top sản phẩm bán chạy</h5>
                 <div class="table-responsive">
                     <table class="table ps-table align-middle">
@@ -129,7 +165,7 @@
         </div>
 
         <div class="col-lg-5">
-            <div class="ps-card p-3 p-lg-4 h-100">
+            <div class="ps-card p-3 h-100">
                 <h5 class="mb-3">Tồn kho thấp</h5>
                 <div class="table-responsive">
                     <table class="table ps-table align-middle">

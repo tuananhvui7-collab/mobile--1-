@@ -3,15 +3,20 @@
 <head th:replace="~{fragments/layout :: head('Đăng nhập - PhoneShop')}"></head>
 <body>
 <div th:replace="~{fragments/layout :: navbar}"></div>
-<main class="container py-4 py-lg-5">
+<main class="container ps-shell">
     <div class="row g-4 align-items-center">
         <div class="col-lg-6">
-            <div class="ps-hero p-4 p-lg-5">
+            <div class="ps-hero p-4 p-lg-5 h-100">
                 <div class="ps-soft-badge mb-3">Welcome back</div>
                 <h1 class="display-5 fw-bold mb-3">Đăng nhập để tiếp tục hành trình mua sắm.</h1>
                 <p class="lead text-white-50 mb-4">
                     Truy cập giỏ hàng, đơn hàng, đánh giá và chăm sóc khách hàng từ một tài khoản duy nhất.
                 </p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="ps-payment-chip">Customer flow</span>
+                    <span class="ps-payment-chip">Employee flow</span>
+                    <span class="ps-payment-chip">Manager flow</span>
+                </div>
                 <img th:src="@{/assets/img/product_single_01.jpg}" class="img-fluid rounded-4 shadow-sm" alt="PhoneShop">
             </div>
         </div>
@@ -22,6 +27,9 @@
                 <p class="ps-muted mb-4">Dùng email và mật khẩu của bạn để vào hệ thống.</p>
                 <div th:if="${param.registered}" class="alert alert-success ps-alert">Đăng ký thành công! Hãy đăng nhập.</div>
                 <div th:if="${param.error}" class="alert alert-danger ps-alert">Sai email hoặc mật khẩu! Vui lòng thử lại.</div>
+                <div class="alert alert-light border ps-alert mb-4">
+                    Hệ thống đã có sẵn luồng customer, staff và manager. Chỉ cần đăng nhập đúng role là vào đúng màn hình.
+                </div>
 
                 <form th:action="@{/login}" method="post" class="vstack gap-3">
                     <div>

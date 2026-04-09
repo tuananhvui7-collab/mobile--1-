@@ -43,7 +43,10 @@
                 <a sec:authorize="!isAuthenticated()" th:href="@{/register}" class="btn btn-sm btn-outline-light">Đăng ký</a>
 
                 <a sec:authorize="isAuthenticated() and hasRole('CUSTOMER')" th:href="@{/cart}" class="btn btn-sm btn-outline-light">Cart</a>
-                <a sec:authorize="isAuthenticated()" th:href="@{/logout}" class="btn btn-sm btn-warning">Đăng xuất</a>
+                <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="d-inline">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-sm btn-warning">Đăng xuất</button>
+                </form>
             </div>
         </div>
     </div>

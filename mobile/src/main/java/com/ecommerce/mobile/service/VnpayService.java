@@ -160,7 +160,7 @@ public class VnpayService {
         if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
             return CallbackResult.success("00", "Confirm Success", payment);
         }
-        return CallbackResult.success("00", "Confirm Success", payment);
+        return CallbackResult.error(responseCode.isBlank() ? "01" : responseCode, "Payment Failed");
     }
 
     @Transactional

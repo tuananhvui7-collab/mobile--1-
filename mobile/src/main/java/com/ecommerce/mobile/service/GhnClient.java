@@ -73,6 +73,17 @@ public class GhnClient {
         }
     }
 
+    public JsonNode tryFetchOrderDetailByClientCode(String clientOrderCode) {
+        if (!isConfigured() || !StringUtils.hasText(clientOrderCode)) {
+            return null;
+        }
+        try {
+            return fetchOrderDetailByClientCode(clientOrderCode);
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
     public boolean isConfigured() {
         return properties != null
                 && StringUtils.hasText(properties.getApiBaseUrl())
@@ -148,6 +159,17 @@ public class GhnClient {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("GHN request bị ngắt: " + ex.getMessage(), ex);
+        }
+    }
+
+    public JsonNode tryCreateOrder(Order order, Shipment shipment) {
+        if (!isConfigured()) {
+            return null;
+        }
+        try {
+            return createOrder(order, shipment);
+        } catch (RuntimeException ex) {
+            return null;
         }
     }
 

@@ -1,5 +1,8 @@
 package com.ecommerce.mobile.controller;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.web.servlet.error.ErrorController;
@@ -20,7 +23,19 @@ public class AppErrorController implements ErrorController {
         model.addAttribute("status", statusCode != null ? statusCode.toString() : "500");
         model.addAttribute("path", requestUri != null ? requestUri.toString() : request.getRequestURI());
         model.addAttribute("message", message != null ? message.toString() : "Đã có lỗi xảy ra trong quá trình xử lý.");
-        model.addAttribute("exception", exception != null ? exception.toString() : null);
+        if (exception instanceof Throwable throwable) {
+            Throwable root = throwable;
+            while (root.getCause() != null) {
+                root = root.getCause();
+            }
+            model.addAttribute("exception", root.toString());
+            StringWriter stack = new StringWriter();
+            root.printStackTrace(new PrintWriter(stack));
+            model.addAttribute("stacktrace", stack.toString());
+        } else {
+            model.addAttribute("exception", null);
+            model.addAttribute("stacktrace", null);
+        }
 
         return "error";
     }

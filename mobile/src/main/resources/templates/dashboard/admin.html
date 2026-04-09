@@ -5,52 +5,56 @@
 <div th:replace="~{fragments/layout :: navbar}"></div>
 
 <main class="container ps-shell">
-    <div class="ps-hero p-4 p-md-5 mb-4">
-        <div class="row align-items-center g-4">
+    <div class="ps-hero p-3 p-md-4 mb-4">
+        <div class="row align-items-center g-3">
             <div class="col-lg-8">
-                <div class="ps-soft-badge mb-3">Manager</div>
-                <h1 class="ps-page-title text-white mb-3">Bảng điều khiển quản lý</h1>
-                <p class="lead mb-0 text-white-50">Đây là nơi quản lý sản phẩm, đơn hàng và các luồng vận hành chính của hệ thống.</p>
+                <div class="ps-soft-badge mb-2">Manager</div>
+                <h1 class="ps-page-title text-white mb-2">Bảng điều khiển quản lý</h1>
+                <p class="text-white-50 mb-0">Quản lý sản phẩm, nhân viên, đơn hàng và các luồng vận hành chính của hệ thống.</p>
             </div>
             <div class="col-lg-4 text-lg-end">
-                <a th:href="@{/admin/orders}" class="btn btn-light btn-lg me-2">Đơn hàng</a>
-                <a th:href="@{/admin/products}" class="btn btn-outline-light btn-lg">Sản phẩm</a>
-                <a th:href="@{/admin/employees}" class="btn btn-outline-light btn-lg ms-2">Nhân viên</a>
-                <a th:href="@{/admin/reports}" class="btn btn-warning btn-lg ms-2">Báo cáo</a>
+                <a th:href="@{/admin/orders}" class="btn btn-light me-2 ps-btn-pill">Đơn hàng</a>
+                <a th:href="@{/admin/products}" class="btn btn-outline-light ps-btn-pill">Sản phẩm</a>
+                <a th:href="@{/admin/employees}" class="btn btn-outline-light ms-2 ps-btn-pill">Nhân viên</a>
+                <a th:href="@{/admin/reports}" class="btn btn-warning ms-2 ps-btn-pill">Báo cáo</a>
             </div>
         </div>
     </div>
 
-    <div class="row g-3 g-lg-4">
+    <div class="row g-3">
         <div class="col-md-6">
             <a th:href="@{/admin/orders}" class="text-decoration-none">
-                <div class="ps-card ps-card-hover bg-white p-4 h-100">
+                <div class="ps-card ps-card-hover bg-white p-3 h-100">
+                    <div class="ps-soft-badge mb-2">Orders</div>
                     <h5 class="mb-2 text-dark">Đơn hàng</h5>
-                    <p class="text-muted mb-0">Xem danh sách và đổi trạng thái đơn.</p>
+                    <p class="text-muted mb-0">Xem danh sách, đổi trạng thái và xử lý các đơn hàng đang chờ.</p>
                 </div>
             </a>
         </div>
         <div class="col-md-6">
             <a th:href="@{/admin/products}" class="text-decoration-none">
-                <div class="ps-card ps-card-hover bg-white p-4 h-100">
+                <div class="ps-card ps-card-hover bg-white p-3 h-100">
+                    <div class="ps-soft-badge mb-2">Catalog</div>
                     <h5 class="mb-2 text-dark">Sản phẩm</h5>
-                    <p class="text-muted mb-0">Tạo, sửa, ẩn và xem chi tiết sản phẩm.</p>
+                    <p class="text-muted mb-0">Tạo, sửa, ẩn và xem chi tiết sản phẩm, biến thể và giá.</p>
                 </div>
             </a>
         </div>
         <div class="col-md-6">
             <a th:href="@{/admin/employees}" class="text-decoration-none">
-                <div class="ps-card ps-card-hover bg-white p-4 h-100">
+                <div class="ps-card ps-card-hover bg-white p-3 h-100">
+                    <div class="ps-soft-badge mb-2">Staff</div>
                     <h5 class="mb-2 text-dark">Nhân viên</h5>
-                    <p class="text-muted mb-0">Tạo, sửa, khóa và mở khóa tài khoản nhân viên.</p>
+                    <p class="text-muted mb-0">Tạo, sửa, khóa, mở khóa và reset tài khoản nhân viên.</p>
                 </div>
             </a>
         </div>
         <div class="col-md-6">
             <a th:href="@{/admin/reports}" class="text-decoration-none">
-                <div class="ps-card ps-card-hover bg-white p-4 h-100">
+                <div class="ps-card ps-card-hover bg-white p-3 h-100">
+                    <div class="ps-soft-badge mb-2">BI</div>
                     <h5 class="mb-2 text-dark">Báo cáo kinh doanh</h5>
-                    <p class="text-muted mb-0">Xem doanh số, lợi nhuận và tồn kho.</p>
+                    <p class="text-muted mb-0">Xem doanh số, lợi nhuận, tồn kho và hiệu suất vận hành.</p>
                 </div>
             </a>
         </div>

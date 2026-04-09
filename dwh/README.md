@@ -1,6 +1,6 @@
 # PhoneShop DWH and BI
 
-This folder contains the analytical database for the project.
+This folder contains the analytical database and BI setup for the project.
 
 ## Purpose
 
@@ -15,7 +15,7 @@ For the current sprint, the web app has been polished first so BI can rest on a 
 ## Data flow
 
 ```text
-mockdata.py -> phoneshop_db -> etl_to_dwh.py -> phoneshop_dw -> Power BI / Metabase
+mockdata.py -> phoneshop_db -> etl_to_dwh.py -> phoneshop_dw -> Metabase
 ```
 
 ## Warehouse schema
@@ -40,9 +40,11 @@ The warehouse uses a small galaxy-style model:
 - `powerbi_dim_month.dax`
   - calculated table for monthly OPEX visuals, built from `Fact_OPEX`
 - `powerbi_kpi_measures.dax`
-  - DAX measures for Power BI
+  - legacy / optional DAX measures for Power BI
 - `powerbi_dashboard_setup.md`
-  - step-by-step dashboard layout
+  - legacy / optional dashboard layout for Power BI
+- `METABASE_SETUP.md`
+  - recommended dashboard setup for Sprint 4
 
 ## What each table means
 
@@ -117,6 +119,10 @@ The DWH is designed to support these KPIs:
 
 ## How to build it
 
+For the full database run guide, see:
+
+- [Database setup guide](../DATABASE_SETUP.md)
+
 ### 1. Create the warehouse
 
 Run:
@@ -147,27 +153,15 @@ This loads data from `phoneshop_db` into `phoneshop_dw`.
 
 ### 4. Build the dashboard
 
-Open Power BI Desktop and follow:
+Open Metabase and follow:
 
 ```text
-powerbi_dashboard_setup.md
+METABASE_SETUP.md
 ```
 
-Create the monthly helper table from:
+## BI model relationships
 
-```text
-powerbi_dim_month.dax
-```
-
-Then paste the measures from:
-
-```text
-powerbi_kpi_measures.dax
-```
-
-## Power BI relationships
-
-Create these relationships:
+The warehouse schema was designed to support these relationships in BI tools:
 
 - `Dim_Date[date_key]` -> `Fact_Sales[date_key]`
 - `Dim_Date[date_key]` -> `Fact_Reviews[date_key]`
@@ -194,13 +188,12 @@ This is why the DAX file uses `SUMX(VALUES(Fact_Sales[order_id]), ...)` for some
 4. Customer and CSAT
 5. Inventory Risk
 
-## What to do first in Power BI
+## What to do first in Metabase
 
 1. Connect to MySQL `phoneshop_dw`
-2. Load the tables
-3. Create the relationships
-4. Create the DAX measures
-5. Build the visuals
+2. Build the dashboard cards and charts
+3. Embed the dashboard URL in `/admin/reports`
+4. Keep the fallback UI for when the BI service is unavailable
 
 ## If the fact tables are empty
 
@@ -216,7 +209,7 @@ If you are new to BI, remember this order:
 1. source data
 2. ETL
 3. warehouse
-4. DAX
+4. dashboard tool
 5. visuals
 
 ## Current sprint note

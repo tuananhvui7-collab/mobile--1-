@@ -11,7 +11,7 @@
             <h1 class="ps-page-title mb-1">Theo dõi vận chuyển</h1>
             <div class="ps-page-subtitle" th:text="${order.orderCode}">ORD-0000</div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn btn-outline-secondary ps-btn-pill">Quay lại đơn hàng</a>
             <form th:action="@{/orders/{id}/tracking/refresh(id=${order.orderId})}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -22,69 +22,97 @@
 
     <div th:replace="~{fragments/layout :: flash}"></div>
 
-    <div class="ps-card p-4 mb-4">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="ps-muted small text-uppercase fw-semibold">Trạng thái đơn</div>
-                <div class="fw-semibold" th:text="${order.status}">PENDING</div>
+    <div class="ps-hero p-3 p-lg-4 mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge rounded-pill text-bg-light text-dark px-3 py-2" th:text="${order.status}">PENDING</span>
+                    <span class="badge rounded-pill px-3 py-2"
+                          th:classappend="${shipment != null and shipment.status != null and shipment.status.toString() == 'DELIVERED'} ? ' text-bg-success' : (${shipment != null and shipment.status != null and shipment.status.toString() == 'CANCELLED'} ? ' text-bg-danger' : ' text-bg-warning text-dark')"
+                          th:text="${shipment != null ? shipment.status : 'CHỜ TẠO VẬN ĐƠN'}">—</span>
+                    <span class="badge rounded-pill text-bg-light text-dark px-3 py-2" th:text="${shipment != null ? shipment.carrier : 'GHN'}">GHN</span>
+                </div>
+                <h2 class="ps-page-title text-white mb-2">Lộ trình giao hàng</h2>
+                <p class="text-white-50 mb-0">
+                    Theo dõi trạng thái đơn hàng, mã vận đơn và timeline cập nhật từ đơn vị vận chuyển.
+                </p>
             </div>
-            <div class="col-md-4">
-                <div class="ps-muted small text-uppercase fw-semibold">Trạng thái vận chuyển</div>
-                <div class="fw-semibold" th:text="${shipment != null ? shipment.status : 'CHỜ TẠO VẬN ĐƠN'}">—</div>
-            </div>
-            <div class="col-md-4">
-                <div class="ps-muted small text-uppercase fw-semibold">Đơn vị vận chuyển</div>
-                <div class="fw-semibold" th:text="${shipment != null ? shipment.carrier : 'GHN'}">GHN</div>
-            </div>
-            <div class="col-md-4">
-                <div class="ps-muted small text-uppercase fw-semibold">Mã nội bộ</div>
-                <div class="fw-semibold" th:text="${shipment != null ? shipment.clientOrderCode : order.orderCode}">—</div>
-            </div>
-            <div class="col-md-4">
-                <div class="ps-muted small text-uppercase fw-semibold">Mã GHN</div>
-                <div class="fw-semibold" th:text="${shipment != null and shipment.ghnOrderCode != null ? shipment.ghnOrderCode : '—'}">—</div>
-            </div>
-            <div class="col-md-4">
-                <div class="ps-muted small text-uppercase fw-semibold">Cập nhật cuối</div>
-                <div class="fw-semibold" th:text="${shipment != null and shipment.lastSyncedAt != null ? #temporals.format(shipment.lastSyncedAt, 'dd/MM/yyyy HH:mm') : '—'}">—</div>
-            </div>
-            <div class="col-12">
-                <div class="ps-muted small text-uppercase fw-semibold">Thông báo</div>
-                <div class="fw-semibold" th:text="${shipment != null and shipment.statusMessage != null ? shipment.statusMessage : 'Đang chờ đơn vị vận chuyển cập nhật.'}">—</div>
-            </div>
-            <div class="col-12" th:if="${shipment != null and shipment.trackingUrl != null}">
-                <div class="ps-muted small text-uppercase fw-semibold">Link theo dõi GHN</div>
-                <a th:href="${shipment.trackingUrl}" target="_blank" rel="noopener" th:text="${shipment.trackingUrl}">—</a>
+            <div class="col-lg-4">
+                <div class="ps-card p-3 bg-white">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="ps-muted">Mã nội bộ</span>
+                        <strong th:text="${shipment != null ? shipment.clientOrderCode : order.orderCode}">—</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="ps-muted">Mã GHN</span>
+                        <strong th:text="${shipment != null and shipment.ghnOrderCode != null ? shipment.ghnOrderCode : '—'}">—</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="ps-muted">Cập nhật cuối</span>
+                        <strong th:text="${shipment != null and shipment.lastSyncedAt != null ? #temporals.format(shipment.lastSyncedAt, 'dd/MM/yyyy HH:mm') : '—'}">—</strong>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="ps-card p-4">
-        <h2 class="h5 fw-bold mb-3">Lộ trình</h2>
-        <div th:if="${events == null or events.isEmpty()}" class="alert alert-info ps-alert mb-0">
-            Chưa có dữ liệu lộ trình từ GHN.
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="ps-card p-3 h-100">
+                <h2 class="h6 fw-bold mb-3">Tóm tắt vận đơn</h2>
+                <div class="ps-summary-list">
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Trạng thái đơn</span>
+                        <strong th:text="${order.status}">PENDING</strong>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Trạng thái vận chuyển</span>
+                        <strong th:text="${shipment != null ? shipment.status : 'CHỜ TẠO VẬN ĐƠN'}">—</strong>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Đơn vị vận chuyển</span>
+                        <strong th:text="${shipment != null ? shipment.carrier : 'GHN'}">GHN</strong>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Link GHN</span>
+                        <strong th:text="${shipment != null and shipment.trackingUrl != null ? 'Có' : 'Chưa có'}">—</strong>
+                    </div>
+                </div>
+                <div class="alert alert-light border ps-alert mt-3 mb-0">
+                    Nếu GHN chưa có dữ liệu mới, bấm đồng bộ để lấy trạng thái cập nhật gần nhất.
+                </div>
+            </div>
         </div>
-        <div th:if="${events != null and !events.isEmpty()}" class="table-responsive">
-            <table class="table ps-table table-bordered align-middle mb-0">
-                <thead class="table-light">
-                <tr>
-                    <th>Thời gian</th>
-                    <th>Trạng thái</th>
-                    <th>Nhóm</th>
-                    <th>Khu vực</th>
-                    <th>Mô tả</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="event : ${events}">
-                    <td th:text="${event.occurredAt != null ? #temporals.format(event.occurredAt, 'dd/MM/yyyy HH:mm') : '—'}">—</td>
-                    <td><span class="badge bg-secondary" th:text="${event.shipmentStatus != null ? event.shipmentStatus : '—'}">—</span></td>
-                    <td th:text="${event.eventType != null ? event.eventType : '—'}">—</td>
-                    <td th:text="${event.warehouse != null ? event.warehouse : '—'}">—</td>
-                    <td th:text="${event.description != null ? event.description : '—'}">—</td>
-                </tr>
-                </tbody>
-            </table>
+
+        <div class="col-lg-7">
+            <div class="ps-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h2 class="h6 fw-bold mb-0">Lộ trình</h2>
+                    <span class="ps-soft-badge" th:text="${events != null ? events.size() + ' sự kiện' : '0 sự kiện'}">0 sự kiện</span>
+                </div>
+
+                <div th:if="${events == null or events.isEmpty()}" class="alert alert-info ps-alert mb-0">
+                    Chưa có dữ liệu lộ trình từ GHN.
+                </div>
+
+                <div th:if="${events != null and !events.isEmpty()}" class="ps-timeline">
+                    <article class="ps-timeline-item" th:each="event : ${events}">
+                        <div class="ps-timeline-dot"></div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+                                <div class="fw-semibold" th:text="${event.description != null ? event.description : 'Cập nhật trạng thái'}">Cập nhật trạng thái</div>
+                                <span class="badge text-bg-primary" th:text="${event.shipmentStatus != null ? event.shipmentStatus : '—'}">—</span>
+                            </div>
+                            <div class="small ps-muted mb-2">
+                                <span th:text="${event.occurredAt != null ? #temporals.format(event.occurredAt, 'dd/MM/yyyy HH:mm') : '—'}">—</span>
+                                <span th:if="${event.warehouse != null}"> • </span>
+                                <span th:text="${event.warehouse != null ? event.warehouse : ''}"></span>
+                            </div>
+                            <div class="small" th:text="${event.eventType != null ? event.eventType : '—'}">—</div>
+                        </div>
+                    </article>
+                </div>
+            </div>
         </div>
     </div>
 </main>

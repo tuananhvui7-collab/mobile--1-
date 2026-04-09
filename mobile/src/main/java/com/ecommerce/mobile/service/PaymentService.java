@@ -60,6 +60,9 @@ public class PaymentService {
         if (payment.getStatus() == PaymentStatus.SUCCESS) {
             return payment;
         }
+        if (payment.getOrder() != null && payment.getOrder().getStatus() == com.ecommerce.mobile.enums.OrderStatus.CANCELLED) {
+            throw new RuntimeException("Đơn hàng đã hủy, không thể xác nhận thanh toán");
+        }
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setPaidAt(LocalDateTime.now());
         if (payment.getOrder() != null) {

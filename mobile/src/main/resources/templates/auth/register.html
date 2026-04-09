@@ -3,15 +3,20 @@
 <head th:replace="~{fragments/layout :: head('Đăng ký - PhoneShop')}"></head>
 <body>
 <div th:replace="~{fragments/layout :: navbar}"></div>
-<main class="container py-4 py-lg-5">
+<main class="container ps-shell">
     <div class="row g-4 align-items-center">
         <div class="col-lg-5">
-            <div class="ps-card p-4 p-lg-5">
+            <div class="ps-card p-4 p-lg-5 h-100">
                 <div class="ps-soft-badge mb-3">Create account</div>
                 <h1 class="display-6 fw-bold mb-3">Tạo tài khoản mua sắm mới.</h1>
                 <p class="ps-muted mb-4">
                     Đăng ký để lưu địa chỉ, theo dõi đơn, viết đánh giá và gửi phản hồi cho shop.
                 </p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="badge rounded-pill text-bg-light text-dark border px-3 py-2">Lưu địa chỉ</span>
+                    <span class="badge rounded-pill text-bg-light text-dark border px-3 py-2">Theo dõi đơn</span>
+                    <span class="badge rounded-pill text-bg-light text-dark border px-3 py-2">Review sản phẩm</span>
+                </div>
                 <img th:src="@{/assets/img/banner_img_02.jpg}" class="img-fluid rounded-4" alt="Register">
             </div>
         </div>
@@ -21,6 +26,9 @@
                 <h2 class="h3 fw-bold mb-2">Đăng ký tài khoản</h2>
                 <p class="ps-muted mb-4">Điền thông tin cơ bản để bắt đầu.</p>
                 <div th:if="${error}" class="alert alert-danger ps-alert" th:text="${error}"></div>
+                <div class="alert alert-light border ps-alert mb-4">
+                    Tài khoản khách hàng sẽ dùng ngay cho cart, checkout, review và tracking.
+                </div>
 
                 <form th:action="@{/register}" method="post" class="row g-3">
                     <div class="col-md-6">

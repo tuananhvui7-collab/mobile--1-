@@ -4,7 +4,7 @@
 <body>
 <div th:replace="~{fragments/layout :: navbar}"></div>
 
-<main class="container ps-shell" style="max-width: 820px;">
+<main class="container ps-shell" style="max-width: 960px;">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <div class="ps-soft-badge mb-2">Payment</div>
@@ -16,43 +16,120 @@
 
     <div th:replace="~{fragments/layout :: flash}"></div>
 
-    <div class="ps-card p-4 mb-4">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <div class="ps-muted small text-uppercase fw-semibold">Phương thức</div>
-                <div class="fw-semibold" th:text="${payment.method}">COD</div>
+    <div class="ps-hero p-3 p-lg-4 mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge rounded-pill text-bg-light text-dark px-3 py-2" th:text="${payment.method}">COD</span>
+                    <span class="badge rounded-pill px-3 py-2"
+                          th:classappend="${payment.status != null and payment.status.name() == 'SUCCESS'} ? ' text-bg-success' : (${payment.status != null and payment.status.name() == 'FAILED'} ? ' text-bg-danger' : ' text-bg-warning text-dark')"
+                          th:text="${payment.status}">PENDING</span>
+                </div>
+                <h2 class="ps-page-title text-white mb-2">Màn thanh toán</h2>
+                <p class="text-white-50 mb-0">
+                    Đây là nơi xem tiến trình thanh toán, đi sang VNPAY sandbox thật hoặc theo dõi COD.
+                </p>
             </div>
-            <div class="col-md-6">
-                <div class="ps-muted small text-uppercase fw-semibold">Trạng thái</div>
-                <div class="fw-semibold" th:text="${payment.status}">PENDING</div>
-            </div>
-            <div class="col-md-6">
-                <div class="ps-muted small text-uppercase fw-semibold">Mã giao dịch</div>
-                <div class="fw-semibold" th:text="${payment.transactionRef}">REF</div>
-            </div>
-            <div class="col-md-6">
-                <div class="ps-muted small text-uppercase fw-semibold">Thanh toán lúc</div>
-                <div class="fw-semibold" th:text="${payment.paidAt != null ? #temporals.format(payment.paidAt, 'dd/MM/yyyy HH:mm') : 'Chưa thanh toán'}">Chưa thanh toán</div>
+            <div class="col-lg-4">
+                <div class="ps-card p-3 bg-white h-100">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="ps-muted">Mã thanh toán</span>
+                        <strong th:text="${payment.paymentId}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="ps-muted">Mã giao dịch</span>
+                        <strong th:text="${payment.transactionRef != null ? payment.transactionRef : '—'}">REF</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="ps-muted">Thanh toán lúc</span>
+                        <strong th:text="${payment.paidAt != null ? #temporals.format(payment.paidAt, 'dd/MM/yyyy HH:mm') : 'Chưa thanh toán'}">Chưa thanh toán</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="ps-muted">Đơn hàng</span>
+                        <strong th:text="${order.orderCode}">ORD</strong>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="ps-card p-4">
-        <h2 class="h5 fw-bold mb-3">Trạng thái xử lý</h2>
-        <p class="mb-3" th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).COD}">
-            Đơn hàng thanh toán khi nhận hàng. Trạng thái thanh toán sẽ được cập nhật sau.
-        </p>
-        <p class="mb-3" th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY}">
-            Đây là màn thanh toán VNPAY sandbox. Bấm nút bên dưới để chuyển sang cổng thanh toán.
-        </p>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="ps-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h2 class="h6 fw-bold mb-0">Trạng thái xử lý</h2>
+                    <span class="ps-soft-badge">Payment flow</span>
+                </div>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY and payment.status != T(com.ecommerce.mobile.enums.PaymentStatus).SUCCESS}"
-               th:href="@{/payments/{id}/vnpay(id=${payment.paymentId})}"
-               class="btn btn-primary ps-btn-pill">Thanh toán qua VNPAY</a>
-            <div th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).COD}"
-                 class="text-muted small align-self-center">
-                Không cần thanh toán online với COD.
+                <div class="ps-timeline mb-3">
+                    <div class="ps-timeline-item active">
+                        <div class="ps-timeline-dot"></div>
+                        <div>
+                            <div class="fw-semibold">Khởi tạo thanh toán</div>
+                            <div class="small ps-muted">Payment record đã được tạo cho đơn hàng.</div>
+                        </div>
+                    </div>
+                    <div class="ps-timeline-item"
+                         th:classappend="${payment.status != null and payment.status.name() == 'SUCCESS'} ? ' active' : ''">
+                        <div class="ps-timeline-dot"></div>
+                        <div>
+                            <div class="fw-semibold">Xác nhận kết quả</div>
+                            <div class="small ps-muted">Kết quả thanh toán sẽ được ghi nhận sau khi callback hoặc mock confirm.</div>
+                        </div>
+                    </div>
+                    <div class="ps-timeline-item"
+                         th:classappend="${payment.status != null and payment.status.name() == 'SUCCESS'} ? ' active' : ''">
+                        <div class="ps-timeline-dot"></div>
+                        <div>
+                            <div class="fw-semibold">Hoàn tất đơn hàng</div>
+                            <div class="small ps-muted">Đơn hàng có thể chuyển sang xử lý giao hàng khi thanh toán thành công.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="mb-3" th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).COD}">
+                    Đơn hàng thanh toán khi nhận hàng. Trạng thái thanh toán sẽ được cập nhật sau.
+                </p>
+                <p class="mb-3" th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY}">
+                    Đây là màn thanh toán VNPAY sandbox. Bấm nút bên dưới để chuyển sang cổng thanh toán.
+                </p>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY and payment.status != T(com.ecommerce.mobile.enums.PaymentStatus).SUCCESS}"
+                       th:href="@{/payments/{id}/vnpay(id=${payment.paymentId})}"
+                       class="btn btn-primary ps-btn-pill">Thanh toán qua VNPAY</a>
+                    <a th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).VN_PAY and payment.status != T(com.ecommerce.mobile.enums.PaymentStatus).SUCCESS}"
+                       th:href="@{/payments/{id}/vnpay/mock(id=${payment.paymentId})}"
+                       class="btn btn-outline-primary ps-btn-pill">Mở mock local</a>
+                    <div th:if="${payment.method == T(com.ecommerce.mobile.enums.PaymentMethod).COD}"
+                         class="text-muted small align-self-center">
+                        Không cần thanh toán online với COD.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="ps-card p-3 h-100">
+                <h2 class="h6 fw-bold mb-3">Thông tin nhanh</h2>
+                <div class="ps-summary-list">
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Phương thức</span>
+                        <strong th:text="${payment.method}">COD</strong>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Trạng thái</span>
+                        <strong th:text="${payment.status}">PENDING</strong>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Mã giao dịch</span>
+                        <strong th:text="${payment.transactionRef != null ? payment.transactionRef : '—'}">REF</strong>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3">
+                        <span class="ps-muted">Thanh toán lúc</span>
+                        <strong th:text="${payment.paidAt != null ? #temporals.format(payment.paidAt, 'dd/MM/yyyy HH:mm') : 'Chưa thanh toán'}">Chưa thanh toán</strong>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

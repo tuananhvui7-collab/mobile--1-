@@ -9,7 +9,7 @@
         <div>
             <div class="ps-soft-badge mb-2">Customer flow</div>
             <h1 class="ps-page-title mb-1">Giỏ hàng của tôi</h1>
-            <div class="ps-page-subtitle">Kiểm tra số lượng, tổng tiền và đi tiếp sang checkout.</div>
+            <div class="ps-page-subtitle">Chỉnh số lượng bằng nút +/- và kiểm tra lại trước khi checkout.</div>
         </div>
         <a th:href="@{/products}" class="btn btn-outline-primary ps-btn-pill">Mua sắm tiếp</a>
     </div>
@@ -26,62 +26,106 @@
     <div class="row g-4" th:unless="${cart.items == null or cart.items.empty}">
         <div class="col-lg-8">
             <div class="ps-card overflow-hidden">
-                <div class="table-responsive">
-                    <table class="table ps-table mb-0 align-middle">
-                        <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Sản phẩm</th>
-                            <th>Đơn giá</th>
-                            <th>Số lượng</th>
-                            <th>Thành tiền</th>
-                            <th class="text-end pe-4">Thao tác</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="item : ${cart.items}">
-                            <td class="ps-4">
-                                <div class="fw-semibold" th:text="${item.productName}">Tên sản phẩm</div>
-                                <div class="ps-muted small" th:text="${item.variant != null ? item.variant.storage_gb + ' GB' : '—'}">—</div>
-                            </td>
-                            <td th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</td>
-                            <td>
-                                <form th:action="@{/cart/update/{id}(id=${item.cartItemId})}" method="post" class="d-inline-flex gap-2 align-items-center flex-wrap">
-                                    <input type="number" name="quantity" min="1" th:value="${item.quantity}" class="form-control form-control-sm" style="width: 88px;">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h2 class="h6 fw-bold mb-1">Danh sách sản phẩm</h2>
+                        <div class="ps-muted small">Điều chỉnh số lượng hoặc xóa những món không cần thiết.</div>
+                    </div>
+                    <div class="ps-soft-badge" th:text="${cart.items.size() + ' dòng hàng'}">0 dòng hàng</div>
+                </div>
+
+                <div class="vstack gap-0">
+                    <article class="ps-cart-item p-3 border-bottom" th:each="item : ${cart.items}">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-lg-6">
+                                <div class="d-flex gap-3 align-items-start">
+                                    <div class="ps-cart-thumb d-none d-md-flex">
+                                        <span th:text="${item.productName != null and !item.productName.isBlank() ? item.productName.substring(0, 1) : 'P'}">P</span>
+                                    </div>
+                                    <div>
+                                        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                            <h3 class="h6 fw-bold mb-0" th:text="${item.productName}">Tên sản phẩm</h3>
+                                            <span class="badge rounded-pill text-bg-light border text-dark"
+                                                  th:text="${item.variant != null && item.variant.storage_gb != null ? item.variant.storage_gb + ' GB' : '—'}">—</span>
+                                        </div>
+                                        <div class="ps-muted small mb-1"
+                                             th:text="${item.variant != null && item.variant.sku != null ? 'SKU: ' + item.variant.sku : 'SKU chưa có'}">SKU</div>
+                                        <div class="small"
+                                             th:classappend="${item.variant != null and item.variant.stockQty != null and item.variant.stockQty > 0} ? ' text-success' : ' text-danger'"
+                                             th:text="${item.variant != null and item.variant.stockQty != null ? 'Tồn kho còn ' + item.variant.stockQty : 'Không rõ tồn kho'}">
+                                            Tồn kho
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-lg-2">
+                                <div class="ps-muted small text-uppercase fw-semibold mb-1">Đơn giá</div>
+                                <div class="fw-bold" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+                            </div>
+
+                            <div class="col-6 col-lg-2">
+                                <div class="ps-muted small text-uppercase fw-semibold mb-1">Thành tiền</div>
+                                <div class="fw-bold text-primary" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+                            </div>
+
+                            <div class="col-lg-2">
+                                <div class="ps-muted small text-uppercase fw-semibold mb-2">Số lượng</div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <form th:action="@{/cart/update/{id}(id=${item.cartItemId})}" method="post" class="d-inline">
+                                        <input type="hidden" name="quantity" th:value="${item.quantity > 1 ? item.quantity - 1 : 1}">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm ps-qty-btn" th:disabled="${item.quantity <= 1}">−</button>
+                                    </form>
+
+                                    <div class="ps-qty-badge" th:text="${item.quantity}">1</div>
+
+                                    <form th:action="@{/cart/update/{id}(id=${item.cartItemId})}" method="post" class="d-inline">
+                                        <input type="hidden" name="quantity" th:value="${item.quantity + 1}">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm ps-qty-btn"
+                                                th:disabled="${item.variant != null and item.variant.stockQty != null and item.quantity >= item.variant.stockQty}">
+                                            +
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <form th:action="@{/cart/remove/{id}(id=${item.cartItemId})}" method="post" class="mt-2">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Cập nhật</button>
+                                    <button type="submit" class="btn btn-link text-danger p-0 small">Xóa</button>
                                 </form>
-                            </td>
-                            <td class="fw-semibold" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</td>
-                            <td class="text-end pe-4">
-                                <form th:action="@{/cart/remove/{id}(id=${item.cartItemId})}" method="post">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
-                                </form>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                            </div>
+                        </div>
+                    </article>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-4">
             <div class="ps-card ps-summary p-4">
-                <div class="ps-soft-badge mb-3">Tổng kết</div>
-                <h2 class="h4 fw-bold mb-3">Thanh toán nhanh hơn</h2>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="ps-muted">Tổng tiền</span>
-                    <strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT')} + ' đ'">0 đ</strong>
+                <div class="ps-soft-badge mb-2">Tổng kết</div>
+                <h2 class="h5 fw-bold mb-3">Thanh toán nhanh hơn</h2>
+
+                <div class="ps-summary-list mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="ps-muted">Tổng tiền hàng</span>
+                        <strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT')} + ' đ'">0 đ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="ps-muted">Số dòng hàng</span>
+                        <strong th:text="${cart.items.size()}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="ps-muted">Cần thanh toán</span>
+                        <strong class="text-primary" th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT')} + ' đ'">0 đ</strong>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="ps-muted">Số dòng hàng</span>
-                    <strong th:text="${cart.items.size()}">0</strong>
+
+                <div class="alert alert-light border ps-alert mb-4">
+                    Bạn có thể điều chỉnh số lượng ngay tại đây, hệ thống sẽ cập nhật lại subtotal theo từng dòng.
                 </div>
-                <div class="d-flex justify-content-between mb-4">
-                    <span class="ps-muted">Cần thanh toán</span>
-                    <strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT')} + ' đ'">0 đ</strong>
-                </div>
-                <a th:href="@{/orders/checkout}" class="btn btn-primary w-100 ps-btn-pill btn-lg">Tiến hành đặt hàng</a>
+
+                <a th:href="@{/orders/checkout}" class="btn btn-primary w-100 ps-btn-pill">Tiến hành đặt hàng</a>
             </div>
         </div>
     </div>

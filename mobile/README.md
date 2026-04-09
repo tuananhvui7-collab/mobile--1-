@@ -136,7 +136,7 @@ The seeded accounts depend on the current mock data, but the common ones are:
 - `employee1@gmail.com / 123456`
 - `customer0001@phoneshop.vn / 123456`
 
-## What is polished in Sprint 2
+## What is polished through Sprint 3
 
 This branch now includes a shared responsive layout system:
 

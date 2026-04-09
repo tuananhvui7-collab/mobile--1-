@@ -12,17 +12,21 @@ The project is split this way on purpose:
 ## High-level flow
 
 ```text
-Mock Data -> OLTP MySQL (`phoneshop_db`) -> ETL Python -> DWH MySQL (`phoneshop_dw`) -> Power BI / Metabase
+Mock Data -> OLTP MySQL (`phoneshop_db`) -> ETL Python -> DWH MySQL (`phoneshop_dw`) -> Metabase
 ```
 
 ## Main documents
 
+- [Final project summary](PROJECT_FINAL_SUMMARY.md)
 - [Web app guide](mobile/README.md)
 - [DWH and BI guide](dwh/README.md)
+- [Database setup guide](DATABASE_SETUP.md)
 - [Learning path](LEARNING_PATH.md)
-- [Monthly helper table for Power BI](powerbi_dim_month.dax)
-- [Power BI measures](powerbi_kpi_measures.dax)
-- [Power BI dashboard setup](powerbi_dashboard_setup.md)
+- [Sequence diagrams chi tiết](SEQUENCE_DIAGRAMS.md)
+- [Monthly helper table for Power BI](powerbi_dim_month.dax) (legacy / optional)
+- [Power BI measures](powerbi_kpi_measures.dax) (legacy / optional)
+- [Power BI dashboard setup](powerbi_dashboard_setup.md) (legacy / optional)
+- [Metabase setup](METABASE_SETUP.md)
 - [Mock data generator](mockdata.py)
 - [ETL script](etl_to_dwh.py)
 
@@ -51,7 +55,7 @@ The BI stack covers:
 - ETL from OLTP to DWH
 - star / galaxy schema for analytics
 - KPI measures for Power BI
-- dashboard setup for Power BI or Metabase
+- dashboard setup for Metabase
 
 The business report feature `U14` belongs to this stack.
 
@@ -79,9 +83,17 @@ Then run the ETL:
 etl_to_dwh.py
 ```
 
-### 4. Open Power BI
+### 4. Database options
 
-Load the `phoneshop_dw` database, create the relationships, and paste the measures from `powerbi_kpi_measures.dax`.
+See [Database setup guide](DATABASE_SETUP.md) for:
+
+- MySQL setup and run order
+- SQL Server porting notes for the warehouse layer
+
+### 5. Open Metabase
+
+Load the `phoneshop_dw` database, create the dashboard, and embed its URL through `bi.dashboard-url`.
+See `METABASE_SETUP.md` for the recommended flow.
 
 ## Project status
 
@@ -91,14 +103,18 @@ The current system is usable for:
 - DWH loading
 - BI dashboard building
 
-Sprint 2 is now focused on the web app polish pass:
+Sprint 3 is focused on the web app polish pass:
 - cleaner layout and responsive screens
 - more realistic customer, staff, and manager flows
 - local payment and shipment test paths
 - manager-side employee management
 
+Sprint 4 is focused on BI integration:
+- Metabase dashboard setup
+- iframe embedding in `/admin/reports`
+- graceful fallback when BI is unavailable
+
 If you want to continue later, the next natural steps are:
-- improve product detail and cart UX further
-- add richer order timeline visuals
-- make the manager pages feel more like a production admin panel
-- refine BI measures and dashboard pages when you resume the analytics sprint
+- tighten product detail, cart, and checkout UX further
+- refine order timeline and admin/manager screens
+- finalize Metabase dashboards and embed URL

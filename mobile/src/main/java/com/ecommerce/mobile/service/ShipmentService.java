@@ -126,7 +126,14 @@ public class ShipmentService {
             shipment.setClientOrderCode(clientOrderCode);
         }
 
-        JsonNode node = ghnClient.fetchOrderDetailByClientCode(clientOrderCode);
+        JsonNode node = ghnClient.tryFetchOrderDetailByClientCode(clientOrderCode);
+        if (node == null) {
+            shipment.setLastSyncedAt(LocalDateTime.now());
+            if (!StringUtils.hasText(shipment.getStatusMessage())) {
+                shipment.setStatusMessage("GHN chưa sẵn sàng. Giữ trạng thái vận chuyển nội bộ.");
+            }
+            return shipmentRepository.save(shipment);
+        }
         applyGhnSnapshot(shipment, node, "GHN_REFRESH", true);
         return shipmentRepository.save(shipment);
     }
@@ -150,9 +157,9 @@ public class ShipmentService {
         } else if (orderStatus == OrderStatus.SHIPPING) {
             status = ShipmentStatus.PENDING;
             message = "Đơn hàng đã bàn giao cho GHN, chờ đồng bộ lộ trình.";
-            if (shipment.getGhnOrderCode() == null && ghnClient.isConfigured()) {
-                try {
-                    JsonNode created = ghnClient.createOrder(order, shipment);
+            if (shipment.getGhnOrderCode() == null) {
+                JsonNode created = ghnClient.tryCreateOrder(order, shipment);
+                if (created != null) {
                     String ghnOrderCode = readText(created, "order_code", "OrderCode", "ghn_order_code");
                     if (StringUtils.hasText(ghnOrderCode)) {
                         shipment.setGhnOrderCode(ghnOrderCode);
@@ -161,8 +168,6 @@ public class ShipmentService {
                     }
                     appendEvent(shipment, "GHN_CREATED", ghnOrderCode, ShipmentStatus.PENDING, null,
                             "Đã tạo vận đơn trên GHN", created.toString());
-                } catch (RuntimeException ex) {
-                    message = message + " | Tạo vận đơn GHN thất bại: " + ex.getMessage();
                 }
             }
         } else if (orderStatus == OrderStatus.DELIVERED) {
@@ -265,6 +270,9 @@ public class ShipmentService {
                              String warehouse,
                              String description,
                              String rawPayload) {
+        if (shipment.getEvents() == null) {
+            shipment.setEvents(new java.util.ArrayList<>());
+        }
         ShipmentTrackingEvent event = new ShipmentTrackingEvent();
         event.setShipment(shipment);
         event.setEventType(eventType);
