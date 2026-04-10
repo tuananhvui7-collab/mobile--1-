@@ -1,7 +1,10 @@
 package com.ecommerce.mobile.service;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -12,12 +15,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ecommerce.mobile.dto.report.ManagerReportView;
 import com.ecommerce.mobile.dto.report.ManagerReportSummary;
-import com.ecommerce.mobile.dto.report.MonthlyReportPoint;
+import com.ecommerce.mobile.dto.report.ManagerReportView;
+import com.ecommerce.mobile.dto.report.ReportPeriodPoint;
 import com.ecommerce.mobile.dto.report.StockAlertRow;
 import com.ecommerce.mobile.dto.report.TopProductRow;
 import com.ecommerce.mobile.entity.Order;
@@ -34,7 +44,6 @@ import com.ecommerce.mobile.repository.ProductVariantRepository;
 public class ReportService {
 
     private static final int LOW_STOCK_THRESHOLD = 5;
-    private static final int MONTH_WINDOW = 6;
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
@@ -50,6 +59,13 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public ManagerReportView getManagerReport() {
+        return getManagerReport("month");
+    }
+
+    @Transactional(readOnly = true)
+    public ManagerReportView getManagerReport(String periodTypeRaw) {
+        ReportPeriodType periodType = ReportPeriodType.from(periodTypeRaw);
+
         List<Order> allOrders = orderRepository.findAllByOrderByCreatedAtDesc();
         List<Order> reportableOrders = allOrders.stream()
                 .filter(order -> order != null && order.getStatus() != OrderStatus.CANCELLED)
@@ -62,16 +78,34 @@ public class ReportService {
         List<ProductVariant> allVariants = productVariantRepository.findAll();
 
         ManagerReportSummary summary = buildSummary(reportableOrders, deliveredOrders, allProducts, allVariants);
-        List<MonthlyReportPoint> monthlyPoints = buildMonthlyPoints(reportableOrders, deliveredOrders);
+        List<ReportPeriodPoint> periodPoints = buildPeriodPoints(reportableOrders, deliveredOrders, periodType);
         List<TopProductRow> topProducts = buildTopProducts(deliveredOrders);
         List<StockAlertRow> stockAlerts = buildStockAlerts(allVariants);
 
         ManagerReportView view = new ManagerReportView();
+        view.setPeriodType(periodType.code);
+        view.setPeriodLabel(periodType.displayLabel);
         view.setSummary(summary);
-        view.setMonthlyPoints(monthlyPoints);
+        view.setPeriodPoints(periodPoints);
         view.setTopProducts(topProducts);
         view.setStockAlerts(stockAlerts);
         return view;
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportManagerReportExcel(String periodTypeRaw) {
+        ManagerReportView view = getManagerReport(periodTypeRaw);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            writeSummarySheet(workbook, view);
+            writePeriodSheet(workbook, view);
+            writeTopProductsSheet(workbook, view);
+            writeStockAlertsSheet(workbook, view);
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (Exception ex) {
+            throw new IllegalStateException("Không thể xuất báo cáo Excel", ex);
+        }
     }
 
     private ManagerReportSummary buildSummary(List<Order> reportableOrders,
@@ -106,24 +140,22 @@ public class ReportService {
         return summary;
     }
 
-    private List<MonthlyReportPoint> buildMonthlyPoints(List<Order> reportableOrders, List<Order> deliveredOrders) {
-        Map<YearMonth, MonthlyReportPoint> points = new LinkedHashMap<>();
-        YearMonth current = YearMonth.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yyyy", Locale.getDefault());
-
-        for (int i = MONTH_WINDOW - 1; i >= 0; i--) {
-            YearMonth month = current.minusMonths(i);
-            MonthlyReportPoint point = new MonthlyReportPoint();
-            point.setLabel(month.format(formatter));
-            points.put(month, point);
+    private List<ReportPeriodPoint> buildPeriodPoints(List<Order> reportableOrders,
+                                                      List<Order> deliveredOrders,
+                                                      ReportPeriodType periodType) {
+        Map<String, ReportPeriodPoint> points = new LinkedHashMap<>();
+        for (PeriodSlot slot : buildPeriodSlots(periodType)) {
+            ReportPeriodPoint point = new ReportPeriodPoint();
+            point.setLabel(slot.label());
+            points.put(slot.key(), point);
         }
 
         for (Order order : reportableOrders) {
             if (order == null || order.getCreatedAt() == null) {
                 continue;
             }
-            YearMonth month = YearMonth.from(order.getCreatedAt());
-            MonthlyReportPoint point = points.get(month);
+            String key = periodKey(order.getCreatedAt(), periodType);
+            ReportPeriodPoint point = points.get(key);
             if (point != null) {
                 point.setOrders(point.getOrders() + 1);
                 point.setGrossRevenue(point.getGrossRevenue().add(safeBigDecimal(order.getTotalAmount())));
@@ -134,8 +166,8 @@ public class ReportService {
             if (order == null || order.getCreatedAt() == null) {
                 continue;
             }
-            YearMonth month = YearMonth.from(order.getCreatedAt());
-            MonthlyReportPoint point = points.get(month);
+            String key = periodKey(order.getCreatedAt(), periodType);
+            ReportPeriodPoint point = points.get(key);
             if (point != null) {
                 point.setRealizedRevenue(point.getRealizedRevenue().add(safeBigDecimal(order.getTotalAmount())));
                 point.setEstimatedProfit(point.getEstimatedProfit().add(calculateOrderProfit(order)));
@@ -143,6 +175,57 @@ public class ReportService {
         }
 
         return new ArrayList<>(points.values());
+    }
+
+    private List<PeriodSlot> buildPeriodSlots(ReportPeriodType periodType) {
+        List<PeriodSlot> slots = new ArrayList<>();
+        switch (periodType) {
+            case MONTH -> {
+                YearMonth current = YearMonth.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yyyy", Locale.getDefault());
+                for (int i = periodType.window - 1; i >= 0; i--) {
+                    YearMonth month = current.minusMonths(i);
+                    slots.add(new PeriodSlot(month.toString(), month.format(formatter)));
+                }
+            }
+            case QUARTER -> {
+                int currentIndex = Year.now().getValue() * 4 + currentQuarterIndex(LocalDateTime.now()) - 1;
+                for (int i = periodType.window - 1; i >= 0; i--) {
+                    int index = currentIndex - i;
+                    int year = index / 4;
+                    int quarter = index % 4 + 1;
+                    slots.add(new PeriodSlot(year + "-Q" + quarter, "Q" + quarter + "/" + year));
+                }
+            }
+            case YEAR -> {
+                int currentYear = Year.now().getValue();
+                for (int i = periodType.window - 1; i >= 0; i--) {
+                    int year = currentYear - i;
+                    slots.add(new PeriodSlot(String.valueOf(year), String.valueOf(year)));
+                }
+            }
+        }
+        return slots;
+    }
+
+    private String periodKey(LocalDateTime dateTime, ReportPeriodType periodType) {
+        switch (periodType) {
+            case MONTH -> {
+                return YearMonth.from(dateTime).toString();
+            }
+            case QUARTER -> {
+                int quarter = currentQuarterIndex(dateTime);
+                return dateTime.getYear() + "-Q" + quarter;
+            }
+            case YEAR -> {
+                return String.valueOf(dateTime.getYear());
+            }
+            default -> throw new IllegalStateException("Unsupported period type");
+        }
+    }
+
+    private int currentQuarterIndex(LocalDateTime dateTime) {
+        return ((dateTime.getMonthValue() - 1) / 3) + 1;
     }
 
     private List<TopProductRow> buildTopProducts(List<Order> deliveredOrders) {
@@ -274,4 +357,139 @@ public class ReportService {
     private BigDecimal safeBigDecimal(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value.setScale(2, RoundingMode.HALF_UP);
     }
+
+    private void writeSummarySheet(Workbook workbook, ManagerReportView view) {
+        Sheet sheet = workbook.createSheet("Summary");
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        int rowNum = 0;
+
+        Row title = sheet.createRow(rowNum++);
+        title.createCell(0).setCellValue("PhoneShop Business Report");
+        title.createCell(1).setCellValue(view.getPeriodLabel() == null ? "month" : view.getPeriodLabel());
+
+        rowNum++;
+        rowNum = writeKeyValue(sheet, rowNum, "Tổng đơn hàng", String.valueOf(view.getSummary().getTotalOrders()));
+        rowNum = writeKeyValue(sheet, rowNum, "Đơn đã giao", String.valueOf(view.getSummary().getDeliveredOrders()));
+        rowNum = writeKeyValue(sheet, rowNum, "Đơn đã hủy", String.valueOf(view.getSummary().getCancelledOrders()));
+        rowNum = writeKeyValue(sheet, rowNum, "Sản phẩm active", String.valueOf(view.getSummary().getActiveProducts()));
+        rowNum = writeKeyValue(sheet, rowNum, "Biến thể", String.valueOf(view.getSummary().getTotalVariants()));
+        rowNum = writeKeyValue(sheet, rowNum, "Biến thể tồn thấp", String.valueOf(view.getSummary().getLowStockVariants()));
+        rowNum = writeKeyValue(sheet, rowNum, "Tổng tồn kho", String.valueOf(view.getSummary().getTotalStockQty()));
+        rowNum = writeKeyValue(sheet, rowNum, "Doanh số", formatMoney(view.getSummary().getGrossRevenue()));
+        rowNum = writeKeyValue(sheet, rowNum, "Doanh thu thực nhận", formatMoney(view.getSummary().getRealizedRevenue()));
+        rowNum = writeKeyValue(sheet, rowNum, "Chi phí ước tính", formatMoney(view.getSummary().getEstimatedCost()));
+        rowNum = writeKeyValue(sheet, rowNum, "Lợi nhuận ước tính", formatMoney(view.getSummary().getEstimatedProfit()));
+        writeKeyValue(sheet, rowNum, "Giá trị tồn kho", formatMoney(view.getSummary().getInventoryValue()));
+
+        autoSize(sheet, 2);
+        sheet.getRow(0).getCell(0).setCellStyle(headerStyle);
+        sheet.getRow(0).getCell(1).setCellStyle(headerStyle);
+    }
+
+    private void writePeriodSheet(Workbook workbook, ManagerReportView view) {
+        Sheet sheet = workbook.createSheet("Period");
+        createTableHeader(sheet, "Kỳ", "Đơn hàng", "Doanh số", "Doanh thu thực nhận", "Lợi nhuận ước tính");
+        int rowNum = 1;
+        for (ReportPeriodPoint point : view.getPeriodPoints()) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(point.getLabel());
+            row.createCell(1).setCellValue(point.getOrders());
+            row.createCell(2).setCellValue(point.getGrossRevenue().doubleValue());
+            row.createCell(3).setCellValue(point.getRealizedRevenue().doubleValue());
+            row.createCell(4).setCellValue(point.getEstimatedProfit().doubleValue());
+        }
+        autoSize(sheet, 5);
+    }
+
+    private void writeTopProductsSheet(Workbook workbook, ManagerReportView view) {
+        Sheet sheet = workbook.createSheet("Top Products");
+        createTableHeader(sheet, "Sản phẩm", "Hãng", "SL bán", "Doanh số", "Chi phí", "Lợi nhuận");
+        int rowNum = 1;
+        for (TopProductRow rowData : view.getTopProducts()) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(rowData.getProductName());
+            row.createCell(1).setCellValue(rowData.getBrand() == null ? "" : rowData.getBrand());
+            row.createCell(2).setCellValue(rowData.getQuantitySold());
+            row.createCell(3).setCellValue(rowData.getGrossRevenue().doubleValue());
+            row.createCell(4).setCellValue(rowData.getEstimatedCost().doubleValue());
+            row.createCell(5).setCellValue(rowData.getEstimatedProfit().doubleValue());
+        }
+        autoSize(sheet, 6);
+    }
+
+    private void writeStockAlertsSheet(Workbook workbook, ManagerReportView view) {
+        Sheet sheet = workbook.createSheet("Stock Alerts");
+        createTableHeader(sheet, "Sản phẩm", "SKU", "Dung lượng", "Tồn kho", "Giá", "Giá nhập", "Giá trị tồn");
+        int rowNum = 1;
+        for (StockAlertRow rowData : view.getStockAlerts()) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(rowData.getProductName());
+            row.createCell(1).setCellValue(rowData.getSku() == null ? "" : rowData.getSku());
+            row.createCell(2).setCellValue(rowData.getStorageGb() == null ? "" : rowData.getStorageGb() + " GB");
+            row.createCell(3).setCellValue(rowData.getStockQty() == null ? 0 : rowData.getStockQty());
+            row.createCell(4).setCellValue(rowData.getPrice().doubleValue());
+            row.createCell(5).setCellValue(rowData.getImportPrice().doubleValue());
+            row.createCell(6).setCellValue(rowData.getInventoryValue().doubleValue());
+        }
+        autoSize(sheet, 7);
+    }
+
+    private void createTableHeader(Sheet sheet, String... headers) {
+        Row header = sheet.createRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            header.createCell(i).setCellValue(headers[i]);
+        }
+    }
+
+    private int writeKeyValue(Sheet sheet, int rowNum, String label, String value) {
+        Row row = sheet.createRow(rowNum++);
+        row.createCell(0).setCellValue(label);
+        row.createCell(1).setCellValue(value);
+        return rowNum;
+    }
+
+    private CellStyle createHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        return style;
+    }
+
+    private void autoSize(Sheet sheet, int columnCount) {
+        for (int i = 0; i < columnCount; i++) {
+            sheet.autoSizeColumn(i);
+        }
+    }
+
+    private String formatMoney(BigDecimal value) {
+        return safeBigDecimal(value).toPlainString();
+    }
+
+    private enum ReportPeriodType {
+        MONTH("month", "Báo cáo theo tháng", 6),
+        QUARTER("quarter", "Báo cáo theo quý", 6),
+        YEAR("year", "Báo cáo theo năm", 5);
+
+        private final String code;
+        private final String displayLabel;
+        private final int window;
+
+        ReportPeriodType(String code, String displayLabel, int window) {
+            this.code = code;
+            this.displayLabel = displayLabel;
+            this.window = window;
+        }
+
+        private static ReportPeriodType from(String raw) {
+            if (raw == null || raw.isBlank()) {
+                return MONTH;
+            }
+            return switch (raw.trim().toLowerCase(Locale.ROOT)) {
+                case "quarter", "quý", "qui" -> QUARTER;
+                case "year", "năm", "nam" -> YEAR;
+                default -> MONTH;
+            };
+        }
+    }
+
+    private record PeriodSlot(String key, String label) {}
 }

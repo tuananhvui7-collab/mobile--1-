@@ -7,6 +7,7 @@ USE phoneshop_dw;
 DROP TABLE IF EXISTS Fact_Sales;
 DROP TABLE IF EXISTS Fact_Reviews;
 DROP TABLE IF EXISTS Fact_OPEX;
+DROP TABLE IF EXISTS Dim_Month;
 DROP TABLE IF EXISTS Dim_Customer;
 DROP TABLE IF EXISTS Dim_Product;
 DROP TABLE IF EXISTS Dim_Date;
@@ -52,6 +53,17 @@ CREATE TABLE Dim_Customer (
     PRIMARY KEY (customer_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE Dim_Month (
+    month_key       INT          NOT NULL,
+    year            SMALLINT     NOT NULL,
+    month           TINYINT      NOT NULL,
+    month_name      VARCHAR(20)  NOT NULL,
+    quarter         TINYINT      NOT NULL,
+    month_label     VARCHAR(20)  NOT NULL,
+    month_sort      INT          NOT NULL,
+    PRIMARY KEY (month_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE Fact_Sales (
     sales_key           BIGINT AUTO_INCREMENT PRIMARY KEY,
     date_key            INT           NOT NULL,
@@ -74,6 +86,12 @@ CREATE TABLE Fact_Sales (
     INDEX idx_product   (product_key),
     INDEX idx_order     (order_id),
     INDEX idx_status    (order_status)
+    ,CONSTRAINT fk_fact_sales_date
+        FOREIGN KEY (date_key) REFERENCES Dim_Date(date_key)
+    ,CONSTRAINT fk_fact_sales_customer
+        FOREIGN KEY (customer_key) REFERENCES Dim_Customer(customer_key)
+    ,CONSTRAINT fk_fact_sales_product
+        FOREIGN KEY (product_key) REFERENCES Dim_Product(product_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE Fact_Reviews (
@@ -86,6 +104,12 @@ CREATE TABLE Fact_Reviews (
     INDEX idx_date      (date_key),
     INDEX idx_product   (product_key),
     INDEX idx_customer  (customer_key)
+    ,CONSTRAINT fk_fact_reviews_date
+        FOREIGN KEY (date_key) REFERENCES Dim_Date(date_key)
+    ,CONSTRAINT fk_fact_reviews_customer
+        FOREIGN KEY (customer_key) REFERENCES Dim_Customer(customer_key)
+    ,CONSTRAINT fk_fact_reviews_product
+        FOREIGN KEY (product_key) REFERENCES Dim_Product(product_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE Fact_OPEX (
@@ -96,5 +120,7 @@ CREATE TABLE Fact_OPEX (
     total_salaries  DECIMAL(19,2) NOT NULL,
     other_opex      DECIMAL(19,2) NOT NULL DEFAULT 0,
     total_opex      DECIMAL(19,2) NOT NULL,
-    UNIQUE KEY uq_month (month_key)
+    UNIQUE KEY uq_month (month_key),
+    CONSTRAINT fk_fact_opex_month
+        FOREIGN KEY (month_key) REFERENCES Dim_Month(month_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

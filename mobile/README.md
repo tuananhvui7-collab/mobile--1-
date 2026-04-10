@@ -145,6 +145,7 @@ This branch now includes a shared responsive layout system:
 - consistent customer, employee, and manager styling
 - local VNPAY mock flow for localhost testing
 - manager employee management pages
+- business reports with month / quarter / year views and Excel export
 
 ## What still feels rough and can be improved next
 

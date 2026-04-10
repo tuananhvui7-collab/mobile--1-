@@ -216,7 +216,9 @@ Trong file đó có đầy đủ sequence cho toàn bộ use case, theo cấu tr
 
 - Dashboard BI nhúng bằng iframe
 - KPI cards
-- Biểu đồ doanh thu theo tháng
+- Bộ lọc báo cáo theo tháng / quý / năm
+- Xuất file Excel thống kê
+- Biểu đồ doanh thu theo tháng, quý hoặc năm
 - Bảng top sản phẩm
 - Bảng tồn kho thấp
 
@@ -240,6 +242,11 @@ Trong file đó có đầy đủ sequence cho toàn bộ use case, theo cấu tr
 - MySQL OLTP (`phoneshop_db`)
 - MySQL DWH (`phoneshop_dw`)
 - Metabase để nhúng dashboard
+- Xuất báo cáo Excel từ trang quản trị
+- KPI formulas: [KPI_FORMULAS.md](../KPI_FORMULAS.md)
+- DWH design: [DWH_DESIGN.md](../DWH_DESIGN.md)
+
+Kho dữ liệu hiện có thêm `Dim_Month` để nối với `Fact_OPEX` theo tháng, giúp báo cáo quản trị rõ ràng hơn khi tổng hợp theo kỳ.
 
 ### 7.3. Frontend
 
@@ -282,6 +289,8 @@ Trong file đó có đầy đủ sequence cho toàn bộ use case, theo cấu tr
 3. Tạo dashboard và các chart.
 4. Dán URL embed vào `bi.dashboard-url`.
 5. Mở `/admin/reports`.
+6. Chọn kỳ báo cáo theo tháng / quý / năm nếu cần.
+7. Xuất Excel thống kê nếu cần lưu file báo cáo.
 
 ---
 

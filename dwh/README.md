@@ -25,12 +25,17 @@ The warehouse uses a small galaxy-style model:
 - `Dim_Date`
 - `Dim_Product`
 - `Dim_Customer`
+- `Dim_Month`
 - `Fact_Sales`
 - `Fact_Reviews`
 - `Fact_OPEX`
 
 ## Files
 
+- `../KPI_FORMULAS.md`
+  - Vietnamese KPI formula reference for the current reporting model
+- `../DWH_DESIGN.md`
+  - Vietnamese warehouse design document
 - `phoneshop_dw_schema.sql`
   - creates the warehouse tables
 - `load_phoneshop_dw.sql`
@@ -38,13 +43,20 @@ The warehouse uses a small galaxy-style model:
 - `etl_to_dwh.py`
   - Python ETL from OLTP to DWH
 - `powerbi_dim_month.dax`
-  - calculated table for monthly OPEX visuals, built from `Fact_OPEX`
+  - legacy / optional helper if you want to build a Power BI month table manually
 - `powerbi_kpi_measures.dax`
   - legacy / optional DAX measures for Power BI
 - `powerbi_dashboard_setup.md`
   - legacy / optional dashboard layout for Power BI
 - `METABASE_SETUP.md`
   - recommended dashboard setup for Sprint 4
+
+## KPI and design docs
+
+If you need the clean human-readable version of the analytics design, start here:
+
+- [KPI formulas](../KPI_FORMULAS.md)
+- [DWH design](../DWH_DESIGN.md)
 
 ## What each table means
 
@@ -111,9 +123,10 @@ The DWH is designed to support these KPIs:
 - Labor Cost Ratio
 - AOV
 - Lead Time
-- Cancel / Refund Rate
+- Cancel Rate
 - Voucher Penetration
 - Total Units Sold
+- Low Stock Variants
 - Low-Stock Alert
 - Average Rating
 
@@ -156,7 +169,7 @@ This loads data from `phoneshop_db` into `phoneshop_dw`.
 Open Metabase and follow:
 
 ```text
-METABASE_SETUP.md
+../docs/METABASE_SETUP.md
 ```
 
 ## BI model relationships
@@ -170,6 +183,10 @@ The warehouse schema was designed to support these relationships in BI tools:
 - `Dim_Product[product_key]` -> `Fact_Sales[product_key]`
 - `Dim_Product[product_key]` -> `Fact_Reviews[product_key]`
 - `Dim_Month[month_key]` -> `Fact_OPEX[month_key]`
+
+Physical constraints:
+- `Fact_Sales` and `Fact_Reviews` have foreign keys to `Dim_Date`, `Dim_Customer`, and `Dim_Product` in the MySQL DWH schema.
+- `Fact_OPEX` has a foreign key to `Dim_Month` in the MySQL DWH schema.
 
 ## Important modeling rule
 

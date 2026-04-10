@@ -5,6 +5,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE Fact_Sales;
 TRUNCATE TABLE Fact_Reviews;
 TRUNCATE TABLE Fact_OPEX;
+TRUNCATE TABLE Dim_Month;
 TRUNCATE TABLE Dim_Customer;
 TRUNCATE TABLE Dim_Product;
 TRUNCATE TABLE Dim_Date;
@@ -109,6 +110,52 @@ LEFT JOIN (
     WHERE is_default = 1
 ) a ON a.user_id = u.user_id
 WHERE u.dtype = 'CUSTOMER';
+
+INSERT INTO Dim_Month
+    (month_key, year, month, month_name, quarter, month_label, month_sort)
+WITH RECURSIVE bounds AS (
+    SELECT
+        COALESCE(MIN(month_start), DATE('2023-01-01')) AS start_month,
+        COALESCE(MAX(month_start), DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS end_month
+    FROM (
+        SELECT DATE_FORMAT(created_at, '%Y-%m-01') AS month_start
+        FROM phoneshop_db.orders
+        UNION ALL
+        SELECT DATE_FORMAT(COALESCE(hire_date, created_at), '%Y-%m-01') AS month_start
+        FROM phoneshop_db.users
+        WHERE dtype IN ('EMPLOYEE', 'MANAGER')
+    ) months_source
+),
+months AS (
+    SELECT start_month AS m, end_month
+    FROM bounds
+    UNION ALL
+    SELECT DATE_ADD(m, INTERVAL 1 MONTH), end_month
+    FROM months
+    WHERE m < end_month
+)
+SELECT
+    YEAR(m) * 100 + MONTH(m) AS month_key,
+    YEAR(m) AS year,
+    MONTH(m) AS month,
+    CASE MONTH(m)
+        WHEN 1 THEN 'Thang 1'
+        WHEN 2 THEN 'Thang 2'
+        WHEN 3 THEN 'Thang 3'
+        WHEN 4 THEN 'Thang 4'
+        WHEN 5 THEN 'Thang 5'
+        WHEN 6 THEN 'Thang 6'
+        WHEN 7 THEN 'Thang 7'
+        WHEN 8 THEN 'Thang 8'
+        WHEN 9 THEN 'Thang 9'
+        WHEN 10 THEN 'Thang 10'
+        WHEN 11 THEN 'Thang 11'
+        WHEN 12 THEN 'Thang 12'
+    END AS month_name,
+    QUARTER(m) AS quarter,
+    CONCAT('Thang ', MONTH(m), '/', YEAR(m)) AS month_label,
+    YEAR(m) * 100 + MONTH(m) AS month_sort
+FROM months;
 
 INSERT INTO Fact_Sales
     (date_key, customer_key, product_key, order_id, order_status, payment_method, is_voucher_applied, lead_time_days, quantity, unit_price, revenue, cogs, gross_profit, discount_amount, shipping_fee)

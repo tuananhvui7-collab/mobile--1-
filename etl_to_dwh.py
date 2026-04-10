@@ -78,6 +78,10 @@ def month_key(dt: date) -> int:
     return dt.year * 100 + dt.month
 
 
+def month_label_vn(month: int, year: int) -> str:
+    return f"Thang {month}/{year}"
+
+
 def month_name_vn(m: int) -> str:
     return f"Thang {m}"
 
@@ -97,7 +101,7 @@ def day_name_vn(py_weekday: int) -> str:
 
 def truncate_target(cur):
     cur.execute("SET FOREIGN_KEY_CHECKS = 0;")
-    for table in ["Fact_Sales", "Fact_Reviews", "Fact_OPEX", "Dim_Customer", "Dim_Product", "Dim_Date"]:
+    for table in ["Fact_Sales", "Fact_Reviews", "Fact_OPEX", "Dim_Month", "Dim_Customer", "Dim_Product", "Dim_Date"]:
         cur.execute(f"TRUNCATE TABLE {table};")
     cur.execute("SET FOREIGN_KEY_CHECKS = 1;")
 
@@ -261,6 +265,35 @@ def build_dim_customer(dwh, source):
     return len(rows)
 
 
+def build_dim_month(dwh, start_dt, end_dt):
+    start_day = as_date(start_dt) or START_FALLBACK
+    end_day = as_date(end_dt) or END_FALLBACK
+    current = date(start_day.year, start_day.month, 1)
+    end_month = date(end_day.year, end_day.month, 1)
+    rows = []
+    while current <= end_month:
+        mk = month_key(current)
+        rows.append((
+            mk,
+            current.year,
+            current.month,
+            month_name_vn(current.month),
+            ((current.month - 1) // 3) + 1,
+            month_label_vn(current.month, current.year),
+            mk,
+        ))
+        if current.month == 12:
+            current = date(current.year + 1, 1, 1)
+        else:
+            current = date(current.year, current.month + 1, 1)
+    execute_many(dwh, """
+        INSERT INTO Dim_Month
+            (month_key, year, month, month_name, quarter, month_label, month_sort)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, rows)
+    return len(rows)
+
+
 def build_fact_sales(dwh, source):
     products_by_variant = {v["variant_id"]: v for v in source["variants"]}
     product_by_id = {p["product_id"]: p for p in source["products"]}
@@ -399,6 +432,7 @@ def main():
         dim_date_count = build_dim_date(dwh_cur, start_dt, end_dt)
         dim_product_count = build_dim_product(dwh_cur, source)
         dim_customer_count = build_dim_customer(dwh_cur, source)
+        dim_month_count = build_dim_month(dwh_cur, start_dt, end_dt)
         fact_sales_count = build_fact_sales(dwh_cur, source)
         fact_reviews_count = build_fact_reviews(dwh_cur, source)
         fact_opex_count = build_fact_opex(dwh_cur, source)
@@ -408,6 +442,7 @@ def main():
         print(f"Dim_Date: {dim_date_count}")
         print(f"Dim_Product: {dim_product_count}")
         print(f"Dim_Customer: {dim_customer_count}")
+        print(f"Dim_Month: {dim_month_count}")
         print(f"Fact_Sales: {fact_sales_count}")
         print(f"Fact_Reviews: {fact_reviews_count}")
         print(f"Fact_OPEX: {fact_opex_count}")

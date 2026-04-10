@@ -9,12 +9,41 @@
         <div>
             <div class="ps-soft-badge mb-2">Manager</div>
             <h1 class="ps-page-title mb-1">Báo cáo kinh doanh</h1>
-            <div class="ps-page-subtitle">Tổng quan doanh số, lợi nhuận, tồn kho và dashboard BI nhúng</div>
+            <div class="ps-page-subtitle">Tổng quan doanh số, lợi nhuận, tồn kho, theo tháng / quý / năm và dashboard BI nhúng</div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary">Dashboard</a>
             <a th:href="@{/admin/orders}" class="btn btn-outline-primary">Đơn hàng</a>
         </div>
+    </div>
+
+    <div class="ps-card p-3 p-lg-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+                <h5 class="mb-1">Bộ lọc thời gian</h5>
+                <div class="text-muted small">Chọn tháng, quý hoặc năm để đổi cách tổng hợp báo cáo.</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a th:href="@{/admin/reports/export(period=${period})}" class="btn btn-outline-success">Xuất Excel</a>
+            </div>
+        </div>
+
+        <form th:action="@{/admin/reports}" method="get" class="row g-3 align-items-end">
+            <div class="col-md-4 col-lg-3">
+                <label class="form-label fw-semibold">Kỳ báo cáo</label>
+                <select name="period" class="form-select" onchange="this.form.submit()">
+                    <option value="month" th:selected="${period == 'month'}">Theo tháng</option>
+                    <option value="quarter" th:selected="${period == 'quarter'}">Theo quý</option>
+                    <option value="year" th:selected="${period == 'year'}">Theo năm</option>
+                </select>
+            </div>
+            <div class="col-md-8 col-lg-9">
+                <div class="alert alert-light border ps-alert mb-0">
+                    Đang xem: <strong th:text="${periodLabel != null ? periodLabel : 'Báo cáo theo tháng'}">Báo cáo theo tháng</strong>
+                    <span class="text-muted">- biểu đồ, bảng top sản phẩm và tồn kho sẽ đổi theo kỳ đã chọn.</span>
+                </div>
+            </div>
+        </form>
     </div>
 
     <div class="ps-card p-3 p-lg-4 mb-4">
@@ -90,8 +119,8 @@
             <div class="ps-card p-3 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
-                        <h5 class="mb-1">Doanh số 6 tháng gần nhất</h5>
-                        <div class="text-muted small">Tổng doanh số và doanh thu đã giao theo tháng</div>
+                        <h5 class="mb-1" th:text="${periodLabel != null ? periodLabel : 'Báo cáo theo tháng'}">Doanh số theo kỳ</h5>
+                        <div class="text-muted small">Tổng doanh số và doanh thu đã giao theo kỳ đã chọn</div>
                     </div>
                     <span class="ps-soft-badge">Internal snapshot</span>
                 </div>
@@ -201,10 +230,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script th:inline="javascript">
-    const monthlyPoints = /*[[${monthlyPoints}]]*/ [];
-    const labels = monthlyPoints.map(p => p.label);
-    const grossRevenue = monthlyPoints.map(p => Number(p.grossRevenue));
-    const realizedRevenue = monthlyPoints.map(p => Number(p.realizedRevenue));
+    const periodPoints = /*[[${periodPoints}]]*/ [];
+    const labels = periodPoints.map(p => p.label);
+    const grossRevenue = periodPoints.map(p => Number(p.grossRevenue));
+    const realizedRevenue = periodPoints.map(p => Number(p.realizedRevenue));
 
     new Chart(document.getElementById('revenueChart'), {
         type: 'line',

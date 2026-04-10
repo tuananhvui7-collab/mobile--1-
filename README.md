@@ -17,16 +17,23 @@ Mock Data -> OLTP MySQL (`phoneshop_db`) -> ETL Python -> DWH MySQL (`phoneshop_
 
 ## Main documents
 
-- [Final project summary](PROJECT_FINAL_SUMMARY.md)
+- [Final project summary](docs/PROJECT_FINAL_SUMMARY.md)
+- [Buổi 4 - Thiết kế hệ thống](docs/BUOI_4_BAO_CAO.md)
+- [KPI và công thức báo cáo](KPI_FORMULAS.md)
+- [Thiết kế DWH chi tiết](DWH_DESIGN.md)
+- [Sprint 5 - 6 - 7 plan](docs/SPRINT_5_6_7_PLAN.md)
 - [Web app guide](mobile/README.md)
 - [DWH and BI guide](dwh/README.md)
-- [Database setup guide](DATABASE_SETUP.md)
-- [Learning path](LEARNING_PATH.md)
-- [Sequence diagrams chi tiết](SEQUENCE_DIAGRAMS.md)
+- [Database setup guide](docs/DATABASE_SETUP.md)
+- [Learning path](docs/LEARNING_PATH.md)
+- [Luồng cơ bản cho sequence](docs/SEQUENCE_BASIC_FLOWS.md)
+- [Sequence diagrams chi tiết](docs/SEQUENCE_DIAGRAMS.md)
+- [Sequence luồng code](docs/SEQUENCE_CODE_FLOW.md)
 - [Monthly helper table for Power BI](powerbi_dim_month.dax) (legacy / optional)
 - [Power BI measures](powerbi_kpi_measures.dax) (legacy / optional)
-- [Power BI dashboard setup](powerbi_dashboard_setup.md) (legacy / optional)
-- [Metabase setup](METABASE_SETUP.md)
+- [Power BI dashboard setup](docs/powerbi_dashboard_setup.md) (legacy / optional)
+- [Power BI KPI formulas step-by-step](docs/powerbi_kpi_measures_step_by_step.md) (legacy / optional)
+- [Metabase setup](docs/METABASE_SETUP.md)
 - [Mock data generator](mockdata.py)
 - [ETL script](etl_to_dwh.py)
 
@@ -44,6 +51,7 @@ The Spring Boot app covers:
 - staff order processing
 - product management
 - business reports
+- business reports with month / quarter / year filters and Excel export
 - responsive layout and shared Thymeleaf fragments
 - manager employee management
 - local VNPAY mock flow for localhost testing
@@ -85,7 +93,7 @@ etl_to_dwh.py
 
 ### 4. Database options
 
-See [Database setup guide](DATABASE_SETUP.md) for:
+See [Database setup guide](docs/DATABASE_SETUP.md) for:
 
 - MySQL setup and run order
 - SQL Server porting notes for the warehouse layer
@@ -93,7 +101,7 @@ See [Database setup guide](DATABASE_SETUP.md) for:
 ### 5. Open Metabase
 
 Load the `phoneshop_dw` database, create the dashboard, and embed its URL through `bi.dashboard-url`.
-See `METABASE_SETUP.md` for the recommended flow.
+See `docs/METABASE_SETUP.md` for the recommended flow.
 
 ## Project status
 
