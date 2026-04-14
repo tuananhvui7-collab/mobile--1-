@@ -269,6 +269,29 @@ Phần web app và dashboard hỗ trợ:
 - theo quý
 - theo năm
 
+### 8.7. Hỗ trợ Power BI
+
+Dự án này tích hợp Power BI để tạo dashboard KPI từ DWH `phoneshop_dw`.
+
+- **Link tải Power BI Desktop**: [https://powerbi.microsoft.com/en-us/desktop/](https://powerbi.microsoft.com/en-us/desktop/)
+- **Link Power BI Service (online)**: [https://app.powerbi.com/](https://app.powerbi.com/) - dùng để publish và chia sẻ dashboard.
+- **Hướng dẫn setup**: Xem file `docs/powerbi_dashboard_setup.md` để biết cách kết nối MySQL với Power BI và tạo visual KPI.
+- **File DAX mẫu**:
+  - `powerbi_dim_month.dax`: Measures cho dimension tháng.
+  - `powerbi_kpi_measures.dax`: Các measures KPI cơ bản (revenue, profit, etc.).
+- **Cách kết nối**:
+  1. Mở Power BI Desktop.
+  2. Chọn "Get Data" > "MySQL database".
+  3. Nhập host: localhost, database: phoneshop_dw, user: root, password: root.
+  4. Import các bảng Dim_* và Fact_*.
+  5. Sử dụng DAX measures để tạo visual (biểu đồ, bảng).
+
+Dashboard Power BI có thể hiển thị:
+- Biểu đồ doanh thu theo tháng/quý.
+- Top sản phẩm bán chạy.
+- Phân tích khách hàng (RFM).
+- Cảnh báo tồn kho thấp.
+
 ### 8.4. Dim_Month trong DWH
 
 `Dim_Month` là bảng dimension vật lý trong `phoneshop_dw`.

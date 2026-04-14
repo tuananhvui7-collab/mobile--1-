@@ -21,7 +21,7 @@ import pymysql
 SRC_DB = {
     "host": os.getenv("SRC_DB_HOST", "localhost"),
     "port": int(os.getenv("SRC_DB_PORT", "3306")),
-    "user": os.getenv("SRC_DB_USER", "phoneshop_mock"),
+    "user": os.getenv("SRC_DB_USER", "root"),
     "password": os.getenv("SRC_DB_PASSWORD", "root"),
     "database": os.getenv("SRC_DB_NAME", "phoneshop_db"),
     "charset": "utf8mb4",
@@ -31,7 +31,7 @@ SRC_DB = {
 DWH_DB = {
     "host": os.getenv("DWH_DB_HOST", "localhost"),
     "port": int(os.getenv("DWH_DB_PORT", "3306")),
-    "user": os.getenv("DWH_DB_USER", "phoneshop_mock"),
+    "user": os.getenv("DWH_DB_USER", "root"),
     "password": os.getenv("DWH_DB_PASSWORD", "root"),
     "database": os.getenv("DWH_DB_NAME", "phoneshop_dw"),
     "charset": "utf8mb4",
