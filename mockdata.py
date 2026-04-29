@@ -21,6 +21,7 @@ import re
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
 
 from faker import Faker
 
@@ -34,14 +35,48 @@ try:
 except ImportError:  # pragma: no cover - optional fallback
     mysql_connector = None
 
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "user": "phoneshop_mock",
-    "password": "root",
-    "database": "phoneshop_db",
-    "charset": "utf8mb4",
-}
+APP_PROPERTIES_PATH = Path(__file__).resolve().parent / "mobile" / "src" / "main" / "resources" / "application.properties"
+
+
+def load_spring_db_config():
+    props = {}
+    if not APP_PROPERTIES_PATH.exists():
+        return props
+
+    for raw_line in APP_PROPERTIES_PATH.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        props[key.strip()] = value.strip()
+    return props
+
+
+def build_db_config():
+    props = load_spring_db_config()
+    jdbc_url = props.get("spring.datasource.url", "")
+    host = "localhost"
+    port = 3306
+    database = "phoneshop_db"
+
+    match = re.search(r"jdbc:mysql://([^:/?]+)(?::(\d+))?/([^?]+)", jdbc_url)
+    if match:
+        host = match.group(1)
+        if match.group(2):
+            port = int(match.group(2))
+        database = match.group(3)
+
+    return {
+        "host": os.getenv("SRC_DB_HOST", host),
+        "port": int(os.getenv("SRC_DB_PORT", str(port))),
+        "user": os.getenv("SRC_DB_USER", props.get("spring.datasource.username", "root")),
+        "password": os.getenv("SRC_DB_PASSWORD", props.get("spring.datasource.password", "")),
+        "database": os.getenv("SRC_DB_NAME", database),
+        "charset": "utf8mb4",
+    }
+
+
+DB_CONFIG = build_db_config()
 
 # Prefer PyMySQL because it is less sensitive to auth-plugin issues on MySQL 8.
 USE_PYMYSQL = True
@@ -93,6 +128,11 @@ Faker.seed(42)
 random.seed(42)
 
 ROLE_ROWS = [(1, "MANAGER"), (2, "EMPLOYEE"), (3, "CUSTOMER")]
+VOUCHER_ROWS = [
+    (1, "WELCOME10", "Giảm 10% tối đa 100.000đ", "PERCENT", 10, 100000, 1000000, 100, True),
+    (2, "TECH15", "Giảm 15% tối đa 150.000đ", "PERCENT", 15, 150000, 1500000, 100, True),
+    (3, "FLAT50K", "Giảm trực tiếp 50.000đ", "FIXED", 50000, None, 300000, 100, True),
+]
 CATEGORY_ROWS = [
     (1, "Điện thoại", "dien-thoai", True, None),
     (2, "Tablet", "tablet", True, None),
@@ -163,7 +203,7 @@ def truncate_tables(cur, existing_tables):
     tables = [
         "shipment_events", "shipments", "payments", "order_items", "orders",
         "cart_items", "carts", "reviews", "feedback", "product_images",
-        "product_variants", "products", "address", "users", "categories", "roles",
+        "product_variants", "products", "address", "users", "categories", "vouchers", "roles",
     ]
     cur.execute("SET FOREIGN_KEY_CHECKS = 0;")
     skipped = []
@@ -262,6 +302,41 @@ PHONE_PRODUCTS = [
 
 def seed_roles(cur):
     execute_many(cur, "INSERT INTO roles (role_id, name_role) VALUES (%s, %s)", ROLE_ROWS)
+
+
+def seed_vouchers(cur, existing_tables):
+    if "vouchers" not in existing_tables:
+        return {}
+
+    voucher_columns = get_table_columns(cur, "vouchers")
+    voucher_rows = []
+    voucher_map = {}
+    now = datetime.now()
+    for voucher_id, code, description, discount_type, discount_value, max_discount_amount, min_order_amount, remaining_quantity, is_active in VOUCHER_ROWS:
+        row_map = {
+            "voucher_id": voucher_id,
+            "code": code,
+            "description": description,
+            "discount_type": discount_type,
+            "discount_value": money(discount_value),
+            "max_discount_amount": money(max_discount_amount) if max_discount_amount is not None else None,
+            "min_order_amount": money(min_order_amount) if min_order_amount is not None else None,
+            "remaining_quantity": remaining_quantity,
+            "is_active": is_active,
+            "start_at": now - timedelta(days=30),
+            "end_at": now + timedelta(days=365),
+            "created_at": now,
+            "updated_at": now,
+        }
+        voucher_rows.append(tuple(row_map[col] for col in voucher_columns))
+        voucher_map[code] = voucher_id
+
+    execute_many(
+        cur,
+        f"INSERT INTO vouchers ({', '.join(voucher_columns)}) VALUES ({', '.join(['%s'] * len(voucher_columns))})",
+        voucher_rows,
+    )
+    return voucher_map
 
 
 def seed_users(cur):
@@ -438,7 +513,7 @@ def seed_carts(cur, customers, variants):
     return carts, cart_items
 
 
-def seed_orders(cur, customers, address_map, variants, existing_tables):
+def seed_orders(cur, customers, address_map, variants, existing_tables, voucher_map):
     orders, order_items, payments, shipments, shipment_events = [], [], [], [], []
     orows, irows, prows, srows, erows = [], [], [], [], []
     oid = oiid = pid = sid = evid = 1
@@ -462,6 +537,7 @@ def seed_orders(cur, customers, address_map, variants, existing_tables):
             line_items.append((v, qty, unit_price, line_subtotal))
 
         voucher_code, discount = voucher_discount(subtotal)
+        voucher_id = voucher_map.get(voucher_code) if voucher_code else None
         shipping_fee = money(random.choice([0, 15000, 25000, 30000, 40000, 50000]))
         total = money(max(subtotal - discount + shipping_fee, Decimal("0")))
         addr = random.choice(address_map.get(customer["user_id"], [])) if address_map.get(customer["user_id"]) else None
@@ -490,7 +566,7 @@ def seed_orders(cur, customers, address_map, variants, existing_tables):
             "total_amount": total,
             "shipping_fee": shipping_fee,
             "discount_amount": discount,
-            "applied_voucher": voucher_code,
+            "voucher_id": voucher_id,
             "shipping_name": shipping_name,
             "shipping_phone": shipping_phone,
             "shipping_address": shipping_address,
@@ -501,6 +577,8 @@ def seed_orders(cur, customers, address_map, variants, existing_tables):
             "shipping_ward": shipping_ward,
             "shipping_district": shipping_district,
         }
+        if "applied_voucher" in order_columns:
+            order_row_map["applied_voucher"] = voucher_code
         orders[-1] = order_row_map
         orows.append(tuple(order_row_map[col] for col in order_columns))
 
@@ -539,15 +617,43 @@ def seed_orders(cur, customers, address_map, variants, existing_tables):
             shipment_status = shipment_status_for(order_status)
             if shipment_status not in {"PENDING", "PICKED_UP", "IN_TRANSIT", "DELIVERED"}:
                 shipment_status = "PENDING"
+            shipped_at = created_at + timedelta(hours=random.randint(2, 24))
+            delivered_at = created_at + timedelta(hours=random.randint(25, 72)) if shipment_status == "DELIVERED" else None
+            expected_delivery_at = created_at + timedelta(days=random.randint(2, 7))
+            client_order_code = order_code
+            ghn_order_code = f"GHN{oid:08d}"
+            ghn_status = {
+                "PENDING": "ready_to_pick",
+                "PICKED_UP": "picked",
+                "IN_TRANSIT": "transporting",
+                "DELIVERED": "delivered",
+            }.get(shipment_status, "ready_to_pick")
+            status_message = {
+                "PENDING": "Đơn hàng đã tiếp nhận, chờ GHN lấy hàng.",
+                "PICKED_UP": "GHN đã lấy hàng.",
+                "IN_TRANSIT": "Kiện hàng đang vận chuyển.",
+                "DELIVERED": "Kiện hàng đã giao thành công.",
+            }.get(shipment_status, "Đang đồng bộ trạng thái vận chuyển.")
             shipment_row_map = {
                 "shipment_id": sid,
                 "order_id": oid,
                 "carrier": "GHN",
-                "tracking_code": f"GHN{oid:08d}",
+                "client_order_code": client_order_code,
+                "ghn_order_code": ghn_order_code,
                 "status": shipment_status,
-                "estimated_at": created_at + timedelta(days=random.randint(2, 7)),
-                "shipped_at": created_at + timedelta(hours=random.randint(2, 24)),
-                "delivered_at": created_at + timedelta(hours=random.randint(25, 72)) if shipment_status == "DELIVERED" else None,
+                "ghn_status": ghn_status,
+                "status_message": status_message,
+                "tracking_url": f"https://donhang.ghn.vn/?order_code={client_order_code}",
+                "expected_delivery_at": expected_delivery_at,
+                "last_synced_at": shipped_at,
+                "raw_payload": json.dumps({
+                    "client_order_code": client_order_code,
+                    "order_code": ghn_order_code,
+                    "status": ghn_status,
+                    "status_message": status_message,
+                }, ensure_ascii=False),
+                "created_at": created_at,
+                "updated_at": delivered_at or shipped_at,
             }
             shipments.append(shipment_row_map)
             if shipment_columns:
@@ -666,11 +772,13 @@ def main():
         conn.commit()
         seed_categories(cur)
         conn.commit()
+        voucher_map = seed_vouchers(cur, existing_tables)
+        conn.commit()
         products, variants, images = seed_products(cur)
         conn.commit()
         carts, cart_items = seed_carts(cur, customers, variants)
         conn.commit()
-        orders, order_items, payments, shipments, shipment_events = seed_orders(cur, customers, address_map, variants, existing_tables)
+        orders, order_items, payments, shipments, shipment_events = seed_orders(cur, customers, address_map, variants, existing_tables, voucher_map)
         conn.commit()
         reviews = seed_reviews(cur, orders, order_items, variants)
         conn.commit()

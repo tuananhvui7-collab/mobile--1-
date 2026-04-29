@@ -1,0 +1,4 @@
+*.log
+*.err.log
+mobile/cp.txt
+__pycache__/
